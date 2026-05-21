@@ -350,6 +350,12 @@ rest of the docs are derived from them.
 - **A new helper script** — drop it in `book-to-skill/scripts/`,
   make it idempotent, document the one-line invocation in
   `book-to-skill/SKILL.md`.
+- **The hero diagram** — open
+  `artifacts/readme-hero-pipeline.html` in a browser, flip the
+  theme toggle if desired, screenshot the `.plate` block, and save
+  to `docs/hero-pipeline.png`. The source HTML uses the live
+  design-system tokens, so the diagram stays in sync if the
+  palette changes.
 
 **Style**
 
