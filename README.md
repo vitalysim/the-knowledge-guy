@@ -3,24 +3,9 @@
 > Turn any PDF or EPUB into a structured Claude Code skill —
 > then ask your whole bookshelf a single question.
 
-```
-        ┌─────────────────────────────────────────────────────┐
-        │  /book-to-skill /path/to/book.pdf                   │
-        └────────────────────────────┬────────────────────────┘
-                                     ▼
-   Stage 0    EXTRACT     PyMuPDF → text + images + chapter slices
-   Pass  0    SPINE       fast read of ToC + intros → thesis + frameworks
-   Stage 1    MAP         one chapter → one toolkit file   (parallel subagents)
-   Stage 2    REDUCE      chapter files → concept map + topic index → SKILL.md
-   Stage 2.5  NUTSHELL    chapter files → per-chapter ~100-word skim
-
-        ┌─────────────────────────────────────────────────────┐
-        │  /the-knowledge-guy <question>                      │
-        └────────────────────────────┬────────────────────────┘
-                                     ▼
-   ask · walk · nutshell · library · comparison · cheatsheet ·
-   glossary · concept-map · toolkit          →  artifacts/*.html
-```
+<p align="center">
+  <img src="docs/hero-pipeline.png" alt="Pipeline diagram: /book-to-skill ingests a PDF through five map-reduce stages into a two-tier Claude Code skill; /the-knowledge-guy routes any question across every installed skill and writes both a chat response and an HTML artifact." width="900">
+</p>
 
 *From a PDF on disk to a queryable knowledge skill in one command;
 from a question to a cross-domain answer in another.*
@@ -341,6 +326,60 @@ chapter files, `relabel_nutshell.py` fixes cached nutshell headings
 after backfill, `upgrade_walk_memory.py` rewrites stale
 `<slug>/chNN` shorthand inside walk memory. All three are no-ops on
 already-current skills.
+
+## Contributing
+
+PRs welcome. Read [`CLAUDE.md`](./CLAUDE.md) and the two `SKILL.md`
+files first — together they're the canonical architecture brief; the
+rest of the docs are derived from them.
+
+**Common contributions**
+
+- **A new mode in `the-knowledge-guy`** — add the trigger to mode
+  dispatch in `the-knowledge-guy/SKILL.md`, write the mode section,
+  and add the matching HTML layout in `design-system/layouts.md`.
+  Every mode emits an artifact (per Step 0.5).
+- **A new design-system component** — add it to
+  `design-system/shell.html`, demo it in
+  `design-system/reference/full-demo-light.html`, and reference it
+  from any layout that uses it. Don't introduce a second accent
+  colour — cobalt is load-bearing.
+- **A new genre profile for `book-to-skill`** — extend
+  `book-to-skill/reference/genre-profiles.md`. Genres tune chunk
+  boundaries, the chapter schema, and the reduce emphasis.
+- **A new helper script** — drop it in `book-to-skill/scripts/`,
+  make it idempotent, document the one-line invocation in
+  `book-to-skill/SKILL.md`.
+
+**Style**
+
+- Markdown wraps at 80 columns; commands and paths go in fenced code
+  blocks; no trailing whitespace.
+- Python is PEP-8 with no extra dependencies beyond what `setup.sh`
+  provisions (PyMuPDF, ebooklib, beautifulsoup4, pypdf).
+- Voice in docs is editorial-confident — declarative sentences, no
+  marketing language, no emoji.
+- Commit subjects are imperative (`Add X`, `Fix Y`); the body
+  explains *why* the change exists, not *what* changed.
+
+**Before opening a PR**
+
+- If you touched a chapter file, run
+  `book-to-skill/scripts/lint_chapters.py <skill-dir>`.
+- If you touched `extract.py`, ingest a small test book and confirm
+  `chapters_manifest.json` is `schema_version: 2` with every entry
+  carrying `book_number`.
+- If you touched a layout, regenerate one cached artifact (e.g.
+  `/the-knowledge-guy nutshell <slug> --regenerate`) and open it in
+  both light and dark themes.
+
+**Issues**
+
+- Bugs: include the affected skill slug, the failing slash command,
+  and the relevant `.claude/skills/<slug>/raw/metadata.json` if it
+  helps the repro.
+- Feature requests: describe the use case before sketching the
+  implementation.
 
 ## What's next
 
