@@ -1,0 +1,2540 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Knowledge Guide — design system (modern · dark)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,300..800&family=JetBrains+Mono:ital,wght@0,400..700;1,400&display=swap" rel="stylesheet">
+
+<style>
+/* ════════════════════════════════════════════════════════════════════
+   KNOWLEDGE GUIDE · MODERN
+   Modern technical reader. Bricolage Grotesque + JetBrains Mono.
+   Mono as architecture, not decoration. Single saturated accent.
+   ════════════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: dark;
+
+  /* — TYPOGRAPHY ———————————————————————————————————— */
+  --font-sans: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* — SPACING ———————————————————————————————————— */
+  --max: 880px;
+  --gutter: 24px;
+  --rule: 1px;
+
+  /* — RADII ———————————————————————————————————— */
+  --r-xs: 3px;
+  --r-sm: 5px;
+  --r-md: 7px;
+  --r-lg: 10px;
+
+  /* — DARK THEME (pinned) ————————————————————————————— */
+  --bg: #0b0b0c;
+  --surface: #141416;
+  --surface-2: #1b1b1e;
+  --surface-3: #25252a;
+  --text: #f5f5f3;
+  --text-muted: #b3b3ad;
+  --text-dim: #777771;
+  --text-faint: #525249;
+  --border: #2a2a2e;
+  --border-strong: #3d3d42;
+  --divider: #1d1d20;
+
+  /* Single saturated accent — cobalt. "Knowledge color." */
+  --accent: #6c89ff;
+  --accent-text: #a7b7ff;
+  --accent-bg: #161e3d;
+  --accent-border: #2e3c70;
+
+  /* Semantic — used sparingly */
+  --ok: #4ade80;
+  --ok-text: #86efac;
+  --ok-bg: #0d2418;
+  --ok-border: #1d4530;
+
+  --warn: #fbbf24;
+  --warn-text: #fcd34d;
+  --warn-bg: #2a1d05;
+  --warn-border: #4a3411;
+
+  --crit: #f87171;
+  --crit-text: #fca5a5;
+  --crit-bg: #2a0e0e;
+  --crit-border: #4a1d1d;
+
+  --insight: #a78bfa;
+  --insight-text: #c4b5fd;
+  --insight-bg: #1c1635;
+  --insight-border: #342a5a;
+
+  /* Code syntax — sober, theme-coherent */
+  --code-bg: #18181b;
+  --code-border: #2a2a2e;
+  --code-key: #a7b7ff;
+  --code-str: #7dd3a2;
+  --code-num: #fcd34d;
+  --code-com: #6a6a64;
+  --code-tag: #c4b5fd;
+
+  /* Terminal — even deeper than the page */
+  --term-bg: #0e0e10;
+  --term-surface: #16161a;
+  --term-text: #e8e8e3;
+  --term-prompt: #7aa2ff;
+  --term-out: #9a9a92;
+  --term-dim: #5a5a52;
+
+  /* Plate — sits in the page, slightly elevated */
+  --plate-bg: #131316;
+  --plate-border: #2a2a2e;
+  --plate-grid: rgba(245,245,243,0.04);
+  --plate-text: #f5f5f3;
+  --plate-text-dim: #777771;
+  --plate-stroke: #cbcbc4;
+  --plate-stroke-soft: #6b6b66;
+  --plate-stroke-faint: #3a3a3e;
+  --plate-node-fill: #1b1b1e;
+  --plate-node-fill-2: #25252a;
+  --plate-accent: #6c89ff;
+  --plate-accent-fill: #1a2547;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   BASE
+   ════════════════════════════════════════════════════════════════════ */
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "ss02", "cv11";
+  font-variation-settings: "wght" 400, "wdth" 92;
+  font-size: 15.5px;
+  line-height: 1.55;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.wrap {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 80px var(--gutter) 120px;
+}
+
+/* — TYPE SCALE ————————————————————————————————————————— */
+h1, h2, h3, h4 {
+  font-family: var(--font-sans);
+  color: var(--text);
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variation-settings: "wght" 600, "wdth" 90;
+}
+h1 {
+  font-size: 48px;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  font-variation-settings: "wght" 650, "wdth" 88;
+  margin: 14px 0 12px;
+}
+h2 {
+  font-size: 28px;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-variation-settings: "wght" 600, "wdth" 90;
+}
+h3 {
+  font-size: 17px;
+  line-height: 1.3;
+  letter-spacing: -0.012em;
+  font-variation-settings: "wght" 600, "wdth" 94;
+  margin: 28px 0 10px;
+}
+h4 {
+  font-size: 13px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin: 24px 0 8px;
+}
+
+p { margin: 12px 0; color: var(--text); }
+.muted { color: var(--text-muted); }
+.dim { color: var(--text-dim); }
+.faint { color: var(--text-faint); }
+
+a {
+  color: var(--accent-text);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color .15s;
+}
+a:hover { border-bottom-color: currentColor; }
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--divider);
+  margin: 32px 0;
+}
+
+::selection { background: var(--accent-bg); color: var(--accent-text); }
+
+/* — INLINE PRIMITIVES ————————————————————————————————————— */
+code, kbd, samp {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  padding: 1px 5px;
+  letter-spacing: 0;
+}
+strong { font-weight: 600; font-variation-settings: "wght" 600, "wdth" 92; }
+em { font-style: italic; }
+
+/* Mono kicker — small uppercase label above section headers */
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.kicker::before {
+  content: "§";
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+}
+.kicker .num { color: var(--accent-text); }
+.kicker.plain::before { content: none; }
+
+/* ════════════════════════════════════════════════════════════════════
+   PAGE CHROME — opening, meta-bar, TOC
+   ════════════════════════════════════════════════════════════════════ */
+
+/* Tiny pill badge — top of doc */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 12px 5px 8px;
+}
+.eyebrow .dot {
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Lede paragraph — slightly larger, ungenerous tracking */
+.lede {
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  max-width: 60ch;
+  margin: 6px 0 24px;
+  font-variation-settings: "wght" 420, "wdth" 92;
+}
+
+/* Meta-bar — tabular, mono, hairlines */
+.meta-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--divider);
+  border-bottom: 1px solid var(--divider);
+  padding: 12px 0;
+  margin: 28px 0 0;
+  gap: 16px;
+}
+.meta-bar .cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.meta-bar .lbl {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+.meta-bar .val {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* Two-column TOC */
+.toc {
+  columns: 2;
+  column-gap: 40px;
+  margin: 28px 0 56px;
+  font-size: 14px;
+}
+.toc a {
+  display: block;
+  padding: 5px 0;
+  color: var(--text);
+  border-bottom: 0;
+  break-inside: avoid;
+}
+.toc a:hover { color: var(--accent-text); }
+.toc .toc-head {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 12px 0 4px;
+  font-weight: 500;
+}
+.toc .toc-head:first-child { margin-top: 0; }
+.toc .num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-faint);
+  margin-right: 10px;
+  display: inline-block;
+  width: 28px;
+}
+
+/* — SECTION HEADER ————————————————————————————————————— */
+.sect {
+  margin: 80px 0 24px;
+}
+.sect-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--divider);
+  margin-bottom: 24px;
+}
+.sect-head .left { display: flex; flex-direction: column; gap: 8px; }
+.sect-head .right {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+/* Accent rail — used on opener and certain emphasized blocks */
+.rail-accent { border-left: 2px solid var(--accent); padding-left: 16px; }
+
+/* ════════════════════════════════════════════════════════════════════
+   FOUNDATIONS — color, type
+   ════════════════════════════════════════════════════════════════════ */
+
+/* Color swatches */
+.swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 16px 0 24px;
+}
+.swatch {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface);
+}
+.swatch .preview {
+  height: 78px;
+  display: flex;
+  align-items: flex-end;
+  padding: 10px 12px;
+  position: relative;
+}
+.swatch .preview .label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 1px 0 rgba(0,0,0,0.2);
+  letter-spacing: 0.02em;
+}
+.swatch .preview.light .label { color: rgba(10,10,10,0.7); text-shadow: none; }
+.swatch .meta {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 9px 12px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  border-top: 1px solid var(--divider);
+  letter-spacing: 0.02em;
+}
+.swatch .meta .name { color: var(--text); }
+.swatch .meta .hex { color: var(--text-dim); }
+
+/* Semantic table */
+.sem-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0 22px;
+  font-size: 13.5px;
+}
+.sem-table th, .sem-table td {
+  text-align: left;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--divider);
+  vertical-align: top;
+}
+.sem-table th {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-weight: 500;
+  background: var(--surface-2);
+}
+.sem-table tr:last-child td { border-bottom: 0; }
+.sem-table code { background: transparent; border: 0; padding: 0; color: var(--accent-text); }
+.sem-table .tag {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border-radius: var(--r-xs);
+  margin-right: 8px;
+  vertical-align: -2px;
+  border: 1px solid var(--border);
+}
+
+/* Type scale demo */
+.type-scale { margin: 14px 0 24px; }
+.type-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 110px;
+  align-items: baseline;
+  gap: 24px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--divider);
+}
+.type-row:last-child { border-bottom: 0; }
+.type-row .lbl {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+.type-row .spec {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: right;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   CONTENT COMPONENTS
+   ════════════════════════════════════════════════════════════════════ */
+
+/* — SOURCE CARD — replaces "bookref"; treat citations as data ——— */
+.source {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: 20px 22px 18px;
+  margin: 14px 0;
+}
+.source::before {
+  content: "";
+  position: absolute;
+  inset: -1px -1px auto -1px;
+  height: 3px;
+  background: var(--accent);
+  border-top-left-radius: var(--r-md);
+  border-top-right-radius: var(--r-md);
+}
+.source.ok::before    { background: var(--ok); }
+.source.warn::before  { background: var(--warn); }
+.source.insight::before { background: var(--insight); }
+.source.crit::before  { background: var(--crit); }
+
+.source .src-id {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.source .src-id .id-pill {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  padding: 2px 8px;
+  color: var(--text-muted);
+}
+.source .src-id .id-dom {
+  color: var(--accent-text);
+  font-weight: 500;
+}
+.source .src-id .id-status {
+  margin-left: auto;
+  color: var(--ok);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.source .src-id .id-status::before {
+  content: ""; width: 6px; height: 6px;
+  background: var(--ok); border-radius: 50%;
+  display: inline-block;
+}
+.source .src-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  font-variation-settings: "wght" 600, "wdth" 88;
+  margin-bottom: 4px;
+}
+.source .src-byline {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: 14px;
+}
+.source .src-locator {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px 24px;
+  padding-top: 14px;
+  border-top: 1px solid var(--divider);
+}
+.source .src-locator .cell { display: flex; flex-direction: column; gap: 2px; }
+.source .src-locator .lbl {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+.source .src-locator .val {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text);
+}
+.source .src-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+/* — DEFINITION ————————————————————————————————————————— */
+.def {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: 20px 22px;
+  margin: 14px 0;
+  position: relative;
+}
+.def .def-tag {
+  position: absolute;
+  top: 16px;
+  right: 22px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.def .def-term {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.022em;
+  line-height: 1.15;
+  font-variation-settings: "wght" 600, "wdth" 86;
+  margin-bottom: 2px;
+}
+.def .def-etymon {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+.def .def-etymon em {
+  font-family: var(--font-sans);
+  font-style: italic;
+  color: var(--text-muted);
+}
+.def .def-body { color: var(--text); margin: 0; }
+.def .def-see {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--divider);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.def .def-see .lbl { color: var(--text-dim); letter-spacing: 0.06em; text-transform: uppercase; font-size: 10.5px; }
+
+/* — Q & A ————————————————————————————————————————— */
+.qna {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: 4px 0;
+  margin: 18px 0;
+  overflow: hidden;
+}
+.qna .turn {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--divider);
+}
+.qna .turn:last-child { border-bottom: 0; }
+.qna .marker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+.qna .marker .m {
+  color: var(--accent-text);
+  font-weight: 600;
+}
+.qna .marker .t { color: var(--text-faint); font-size: 10.5px; }
+.qna .turn.q .marker .m { color: var(--accent-text); }
+.qna .turn.a .marker .m { color: var(--ok); }
+.qna .body { color: var(--text); }
+.qna .turn.q .body { color: var(--text); font-variation-settings: "wght" 500, "wdth" 92; }
+.qna .body p:first-child { margin-top: 0; }
+.qna .body p:last-child { margin-bottom: 0; }
+.qna .body strong { color: var(--text); }
+.qna .src-ref {
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.qna .src-ref .ref {
+  color: var(--accent-text);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--r-xs);
+  padding: 1px 6px;
+  margin-left: 4px;
+}
+
+/* — TUTORIAL STEP ————————————————————————————————————— */
+.tutorial-wrap { margin: 16px 0; }
+.tutorial-progress {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+}
+.tutorial-progress span {
+  flex: 1;
+  height: 3px;
+  background: var(--surface-3);
+  border-radius: 2px;
+}
+.tutorial-progress span.done { background: var(--accent); }
+.tutorial-progress span.curr { background: var(--accent); opacity: 0.45; }
+
+.step {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--divider);
+  gap: 24px;
+}
+.step:last-child { border-bottom: 0; }
+.step .index {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent-text);
+  font-weight: 500;
+}
+.step .index .total { color: var(--text-faint); }
+.step .title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  font-variation-settings: "wght" 600, "wdth" 90;
+  margin-bottom: 6px;
+}
+.step .body p:first-child { margin-top: 0; }
+.step .body p:last-child { margin-bottom: 0; }
+.step .check {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: var(--ok-bg);
+  border: 1px solid var(--ok-border);
+  border-radius: var(--r-sm);
+  font-size: 13.5px;
+  color: var(--ok-text);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.step .check .lbl {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ok);
+  font-weight: 600;
+  white-space: nowrap;
+  padding-top: 2px;
+}
+
+/* — WORKED EXAMPLE ———————————————————————————————————— */
+.worked {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  margin: 14px 0;
+  overflow: hidden;
+}
+.worked .part {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--divider);
+}
+.worked .part:last-child { border-bottom: 0; }
+.worked .part-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.worked .part-label::before {
+  content: "//";
+  color: var(--accent-text);
+  opacity: 0.6;
+}
+.worked .part-label .step { color: var(--text-faint); }
+.worked .part-body p:first-child { margin-top: 0; }
+.worked .part-body p:last-child { margin-bottom: 0; }
+.worked .part-body strong { color: var(--text); }
+
+/* — SUMMARY CAPSULE (TL;DR) ——————————————————————————— */
+.capsule {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 18px 22px;
+  margin: 14px 0;
+  position: relative;
+}
+.capsule .lbl {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.capsule .gist {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  font-variation-settings: "wght" 540, "wdth" 92;
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+.capsule ul {
+  margin: 0; padding: 0 0 0 18px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.capsule li { padding: 2px 0; }
+.capsule li::marker { color: var(--text-faint); }
+
+/* — EXCERPT (pull-quote) ——————————————————————————————— */
+.excerpt {
+  border-left: 2px solid var(--accent);
+  padding: 6px 0 6px 22px;
+  margin: 22px 0;
+}
+.excerpt .quote {
+  font-size: 20px;
+  letter-spacing: -0.014em;
+  line-height: 1.4;
+  font-variation-settings: "wght" 460, "wdth" 90;
+  color: var(--text);
+}
+.excerpt .attr {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 10px;
+  letter-spacing: 0.02em;
+}
+.excerpt .attr::before { content: "— "; color: var(--text-faint); }
+
+/* — CALLOUTS ————————————————————————————————————————— */
+.callout {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text-faint);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  padding: 12px 16px 12px 18px;
+  margin: 12px 0;
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 18px;
+  align-items: start;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.callout .lbl {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding-top: 2px;
+}
+.callout p { margin: 0; }
+.callout p + p { margin-top: 8px; }
+
+.callout.note    { border-left-color: var(--accent);  background: var(--accent-bg);  }
+.callout.note .lbl    { color: var(--accent-text); }
+.callout.tip     { border-left-color: var(--ok);      background: var(--ok-bg);      }
+.callout.tip .lbl     { color: var(--ok-text); }
+.callout.insight { border-left-color: var(--insight); background: var(--insight-bg); }
+.callout.insight .lbl { color: var(--insight-text); }
+.callout.caution { border-left-color: var(--warn);    background: var(--warn-bg);    }
+.callout.caution .lbl { color: var(--warn-text); }
+.callout.critical { border-left-color: var(--crit);    background: var(--crit-bg);    }
+.callout.critical .lbl { color: var(--crit-text); }
+
+/* — COMPARISON TABLE ———————————————————————————————— */
+.compare {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0;
+  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.compare th, .compare td {
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--divider);
+  vertical-align: top;
+}
+.compare thead th {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-weight: 500;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.compare tbody th {
+  font-weight: 600;
+  font-variation-settings: "wght" 600, "wdth" 92;
+  color: var(--text);
+  width: 30%;
+}
+.compare tr:last-child td, .compare tr:last-child th { border-bottom: 0; }
+.compare .mono { font-family: var(--font-mono); font-size: 12.5px; color: var(--text); }
+.compare .num { font-variant-numeric: tabular-nums; }
+
+/* — CODE BLOCK ————————————————————————————————————— */
+.code-block {
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: var(--r-md);
+  margin: 14px 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow: hidden;
+}
+.code-block .code-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--code-border);
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.code-block .code-head .file { font-family: var(--font-mono); }
+.code-block .code-head .lang {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.code-block .code-body {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+}
+.code-block .gutter {
+  user-select: none;
+  text-align: right;
+  padding: 14px 10px 14px 0;
+  color: var(--text-faint);
+  font-size: 12px;
+  border-right: 1px solid var(--divider);
+  background: var(--code-bg);
+}
+.code-block pre {
+  margin: 0;
+  padding: 14px 16px;
+  font-family: var(--font-mono);
+  white-space: pre;
+  overflow-x: auto;
+  color: var(--text);
+}
+.code-block .gutter div, .code-block pre code { display: block; }
+.tok-k { color: var(--code-key); }
+.tok-s { color: var(--code-str); }
+.tok-n { color: var(--code-num); }
+.tok-c { color: var(--code-com); font-style: italic; }
+.tok-t { color: var(--code-tag); }
+
+/* — TERMINAL ——————————————————————————————————————————— */
+.term {
+  background: var(--term-bg);
+  border-radius: var(--r-md);
+  margin: 14px 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  overflow: hidden;
+  color: var(--term-text);
+}
+.term .term-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--term-surface);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.term .term-head .dots {
+  display: flex; gap: 6px;
+}
+.term .term-head .dots span {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+}
+.term .term-head .label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--term-dim);
+  margin-left: 10px;
+}
+.term pre {
+  margin: 0;
+  padding: 14px 18px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.term .p { color: var(--term-prompt); }
+.term .o { color: var(--term-out); }
+.term .d { color: var(--term-dim); }
+
+/* — BIBLIOGRAPHY ————————————————————————————————————— */
+.biblio {
+  list-style: none;
+  margin: 14px 0;
+  padding: 0;
+  font-size: 14px;
+}
+.biblio li {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--divider);
+  align-items: baseline;
+}
+.biblio li:last-child { border-bottom: 0; }
+.biblio .idx {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.biblio .citation .t {
+  font-weight: 600;
+  font-variation-settings: "wght" 580, "wdth" 92;
+}
+.biblio .citation .b {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.biblio .domain {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--r-xs);
+  padding: 2px 8px;
+}
+
+/* — TAGS / CHIPS ————————————————————————————————————— */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  padding: 3px 8px;
+  color: var(--text-muted);
+  letter-spacing: 0;
+}
+.chip::before {
+  content: "#";
+  color: var(--text-faint);
+  margin-right: 1px;
+}
+.chip.accent {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  color: var(--accent-text);
+}
+.chip.accent::before { color: var(--accent); opacity: 0.7; }
+.chip.plain { padding: 3px 10px; }
+.chip.plain::before { content: none; }
+
+.chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* — PREREQ BAR ————————————————————————————————————— */
+.prereq {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 18px;
+  align-items: start;
+  padding: 14px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  margin: 16px 0;
+  font-size: 13.5px;
+}
+.prereq .lbl {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding-top: 4px;
+}
+.prereq .list { display: flex; gap: 6px; flex-wrap: wrap; }
+.prereq a {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  padding: 3px 9px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.prereq a:hover { border-color: var(--accent-border); color: var(--accent-text); }
+
+/* ════════════════════════════════════════════════════════════════════
+   DIAGRAMS — Tier 1 (plate) and Tier 2 (inline)
+   ════════════════════════════════════════════════════════════════════ */
+
+/* — Tier 1: PLATE (theme-aware) ————————————————————————— */
+.plate {
+  position: relative;
+  background: var(--plate-bg);
+  border: 1px solid var(--plate-border);
+  border-radius: var(--r-md);
+  margin: 16px 0;
+  overflow: hidden;
+}
+.plate .plate-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 16px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--plate-border);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.plate .plate-head .id { color: var(--accent-text); }
+.plate .plate-body {
+  padding: 22px 22px 28px;
+  background-image:
+    linear-gradient(var(--plate-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--plate-grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
+}
+.plate svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: var(--font-sans);
+}
+.plate-caption {
+  padding: 0 16px 12px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.plate-caption .num {
+  font-family: var(--font-mono);
+  font-style: normal;
+  color: var(--text-dim);
+  margin-right: 8px;
+}
+
+/* SVG styles for the PLATE — read from CSS variables for theming */
+.plate .node-bg     { fill: var(--plate-node-fill);   stroke: var(--plate-stroke);     stroke-width: 1.5; }
+.plate .node-bg-2   { fill: var(--plate-node-fill-2); stroke: var(--plate-stroke-soft); stroke-width: 1.25; }
+.plate .node-accent { fill: var(--plate-accent-fill); stroke: var(--plate-accent);     stroke-width: 1.5; }
+.plate .node-label    { fill: var(--plate-text);     font-size: 13px; font-weight: 600; text-anchor: middle; font-variation-settings: "wght" 580, "wdth" 90; }
+.plate .node-label-2  { fill: var(--plate-text);     font-size: 12px; font-weight: 500; text-anchor: middle; }
+.plate .node-sub      { fill: var(--plate-text-dim); font-size: 10.5px; text-anchor: middle; font-family: var(--font-mono); letter-spacing: 0.02em; }
+.plate .node-mono     { fill: var(--plate-text);     font-size: 12px; text-anchor: middle; font-family: var(--font-mono); }
+.plate .edge          { stroke: var(--plate-stroke-soft); stroke-width: 1.4; fill: none; }
+.plate .edge-emph     { stroke: var(--plate-accent);     stroke-width: 1.8; fill: none; }
+.plate .edge-feedback { stroke: var(--plate-accent);     stroke-width: 1.6; fill: none; stroke-dasharray: 4 4; }
+.plate .edge-label-bg { fill: var(--plate-bg); stroke: var(--plate-stroke-faint); stroke-width: 1; }
+.plate .edge-label    { fill: var(--plate-text-dim); font-size: 10.5px; text-anchor: middle; font-family: var(--font-mono); letter-spacing: 0.02em; }
+.plate .edge-label-emph { fill: var(--plate-accent);   font-size: 10.5px; text-anchor: middle; font-family: var(--font-mono); letter-spacing: 0.02em; font-weight: 600; }
+.plate .zone-label    { fill: var(--plate-text-dim); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; font-family: var(--font-mono); }
+.plate .arrow         { fill: var(--plate-stroke-soft); }
+.plate .arrow-emph    { fill: var(--plate-accent); }
+
+/* — Tier 2: INLINE ILLUSTRATIONS ————————————————————————— */
+svg.illus {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 16px 0;
+  font-family: var(--font-sans);
+}
+.illus .il-node       { fill: var(--surface); stroke: var(--text); stroke-width: 1.3; }
+.illus .il-node-acc   { fill: var(--accent-bg); stroke: var(--accent); stroke-width: 1.3; }
+.illus .il-node-ok    { fill: var(--ok-bg); stroke: var(--ok); stroke-width: 1.3; }
+.illus .il-node-warn  { fill: var(--warn-bg); stroke: var(--warn); stroke-width: 1.3; }
+.illus .il-node-crit  { fill: var(--crit-bg); stroke: var(--crit); stroke-width: 1.3; }
+.illus .il-node-ins   { fill: var(--insight-bg); stroke: var(--insight); stroke-width: 1.3; }
+.illus .il-label      { fill: var(--text); font-size: 12.5px; font-weight: 500; text-anchor: middle; font-variation-settings: "wght" 540, "wdth" 92; }
+.illus .il-label-acc  { fill: var(--accent-text); }
+.illus .il-label-ok   { fill: var(--ok-text); }
+.illus .il-label-warn { fill: var(--warn-text); }
+.illus .il-label-crit { fill: var(--crit-text); }
+.illus .il-label-ins  { fill: var(--insight-text); }
+.illus .il-sub        { fill: var(--text-dim); font-size: 10.5px; text-anchor: middle; font-family: var(--font-mono); }
+.illus .il-edge       { stroke: var(--text-muted); stroke-width: 1.3; fill: none; }
+.illus .il-edge-emph  { stroke: var(--accent); stroke-width: 1.6; fill: none; }
+.illus .il-arrow      { fill: var(--text-muted); }
+.illus .il-arrow-emph { fill: var(--accent); }
+.illus .il-pill-bg    { fill: var(--bg); stroke: var(--border); stroke-width: 1; }
+.illus .il-pill-text  { fill: var(--text-muted); font-size: 10.5px; text-anchor: middle; font-family: var(--font-mono); }
+
+/* — Diagram legend ————————————————————————————————— */
+.diag-legend {
+  display: flex; flex-wrap: wrap; gap: 8px 18px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 10px 16px 14px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--divider);
+}
+.diag-legend span { display: inline-flex; align-items: center; gap: 7px; }
+.diag-legend i {
+  width: 14px; height: 14px; border-radius: var(--r-xs);
+  border: 1.3px solid;
+  display: inline-block;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   RULES TABLE
+   ════════════════════════════════════════════════════════════════════ */
+.rules {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  margin: 16px 0;
+}
+.rules th, .rules td {
+  text-align: left;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--divider);
+  vertical-align: top;
+}
+.rules thead th {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-weight: 500;
+  background: var(--surface-2);
+}
+.rules .num {
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+  width: 36px;
+}
+.rules .what { width: 30%; font-weight: 600; font-variation-settings: "wght" 580, "wdth" 92; }
+
+/* — Footer ——————————————————————————————————————— */
+.foot {
+  margin-top: 80px;
+  padding: 24px 0 0;
+  border-top: 1px solid var(--divider);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.02em;
+}
+.foot .build .v { color: var(--accent-text); }
+.foot .sig { color: var(--text-muted); }
+
+/* — Small utility ——————————————————————————————————— */
+.spacer { height: 12px; }
+.spacer-lg { height: 40px; }
+.row-flex { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+/* Responsive */
+@media (max-width: 640px) {
+  .wrap { padding: 48px 18px 80px; }
+  h1 { font-size: 36px; }
+  h2 { font-size: 22px; }
+  .meta-bar { grid-template-columns: repeat(2, 1fr); }
+  .toc { columns: 1; }
+  .qna .turn { grid-template-columns: 1fr; gap: 8px; }
+  .step { grid-template-columns: 1fr; gap: 8px; }
+  .callout { grid-template-columns: 1fr; gap: 6px; }
+  .biblio li { grid-template-columns: 32px 1fr; }
+  .biblio .domain { grid-column: 2; justify-self: start; margin-top: 4px; }
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<!-- ═════════════════════════════════════════════════════════════
+     OPENER
+     ═════════════════════════════════════════════════════════════ -->
+<span class="eyebrow"><span class="dot"></span>Knowledge Guide · DS-2 modern · dark</span>
+<h1>A reference for technical reading,<br>built for the eye that is asking.</h1>
+<p class="lede">Knowledge Guide renders books and reading material as inspectable data: summaries, definitions, questions, tutorials, worked examples, and the conceptual diagrams that hold them together. This document is the visual contract — every component named, every modifier listed, every diagram type illustrated.</p>
+
+<div class="meta-bar">
+  <div class="cell"><span class="lbl">Reading time</span><span class="val">16 min</span></div>
+  <div class="cell"><span class="lbl">Level</span><span class="val">All readers</span></div>
+  <div class="cell"><span class="lbl">Scope</span><span class="val">Complete reference</span></div>
+  <div class="cell"><span class="lbl">Themes</span><span class="val">Dark only</span></div>
+</div>
+
+<div class="toc" id="toc">
+  <span class="toc-head">Foundations</span>
+  <a href="#colors"><span class="num">01</span>Color system</a>
+  <a href="#typography"><span class="num">02</span>Typography</a>
+
+  <span class="toc-head">Document chrome</span>
+  <a href="#chrome-headers"><span class="num">03</span>Section header &amp; meta</a>
+  <a href="#chrome-prereq"><span class="num">04</span>Prerequisites bar</a>
+  <a href="#chrome-tags"><span class="num">05</span>Tags &amp; chips</a>
+
+  <span class="toc-head">Content</span>
+  <a href="#source"><span class="num">06</span>Source card</a>
+  <a href="#def"><span class="num">07</span>Definition</a>
+  <a href="#qna"><span class="num">08</span>Question &amp; answer</a>
+  <a href="#tutorial"><span class="num">09</span>Tutorial step</a>
+  <a href="#worked"><span class="num">10</span>Worked example</a>
+  <a href="#capsule"><span class="num">11</span>Summary capsule</a>
+  <a href="#excerpt"><span class="num">12</span>Excerpt</a>
+  <a href="#callouts"><span class="num">13</span>Callouts</a>
+  <a href="#compare"><span class="num">14</span>Comparison table</a>
+  <a href="#code"><span class="num">15</span>Code &amp; terminal</a>
+  <a href="#biblio"><span class="num">16</span>Bibliography</a>
+
+  <span class="toc-head">Diagrams — Tier 1 (plate)</span>
+  <a href="#plate"><span class="num">17</span>The plate</a>
+  <a href="#plate-concept"><span class="num">18</span>Concept map</a>
+  <a href="#plate-taxonomy"><span class="num">19</span>Taxonomy tree</a>
+  <a href="#plate-mental"><span class="num">20</span>Mental model</a>
+
+  <span class="toc-head">Diagrams — Tier 2 (inline)</span>
+  <a href="#illus-shapes"><span class="num">21</span>Shape vocabulary</a>
+  <a href="#illus-flow"><span class="num">22</span>Explanation flow</a>
+  <a href="#illus-matrix"><span class="num">23</span>2×2 matrix</a>
+
+  <span class="toc-head">Hard rules</span>
+  <a href="#rules"><span class="num">24</span>Non-negotiables</a>
+</div>
+
+<!-- ═════════════════════════════════════════════════════════════
+     FOUNDATIONS — Color
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="colors">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">01</span> Foundations</span>
+      <h2>Color system</h2>
+    </div>
+    <div class="right">8 tokens · 1 accent · 4 semantic</div>
+  </div>
+
+  <p>The palette is intentionally <strong>narrow</strong>. One saturated accent — cobalt — carries the system. Four semantic colors (ok / warn / crit / insight) carry meaning, never decoration. Everything else is grayscale. This restraint is the whole modern direction; without it, the system regresses into category soup.</p>
+
+  <h3>Accent &amp; semantic</h3>
+  <div class="swatch-grid">
+    <div class="swatch">
+      <div class="preview" style="background: #6c89ff;"><span class="label">--accent</span></div>
+      <div class="meta"><span class="name">accent</span><span class="hex">#6c89ff</span></div>
+    </div>
+    <div class="swatch">
+      <div class="preview light" style="background: #4ade80;"><span class="label">--ok</span></div>
+      <div class="meta"><span class="name">ok</span><span class="hex">#4ade80</span></div>
+    </div>
+    <div class="swatch">
+      <div class="preview light" style="background: #fbbf24;"><span class="label">--warn</span></div>
+      <div class="meta"><span class="name">warn</span><span class="hex">#fbbf24</span></div>
+    </div>
+    <div class="swatch">
+      <div class="preview" style="background: #f87171;"><span class="label">--crit</span></div>
+      <div class="meta"><span class="name">crit</span><span class="hex">#f87171</span></div>
+    </div>
+    <div class="swatch">
+      <div class="preview light" style="background: #a78bfa;"><span class="label">--insight</span></div>
+      <div class="meta"><span class="name">insight</span><span class="hex">#a78bfa</span></div>
+    </div>
+  </div>
+
+  <h3>Grayscale</h3>
+  <div class="swatch-grid">
+    <div class="swatch">
+      <div class="preview" style="background: #0b0b0c;"><span class="label">--bg</span></div>
+      <div class="meta"><span class="name">bg</span><span class="hex">#0b0b0c</span></div>
+    </div>
+    <div class="swatch">
+      <div class="preview" style="background: #141416;"><span class="label">--surface</span></div>
+      <div class="meta"><span class="name">surface</span><span class="hex">#141416</span></div>
+    </div>
+    <div class="swatch">
+      <div class="preview" style="background: #1b1b1e;"><span class="label">--surface-2</span></div>
+      <div class="meta"><span class="name">surface-2</span><span class="hex">#1b1b1e</span></div>
+    </div>
+    <div class="swatch">
+      <div class="preview light" style="background: #f5f5f3; border-bottom: 1px solid #2a2a2e;"><span class="label">--text</span></div>
+      <div class="meta"><span class="name">text</span><span class="hex">#f5f5f3</span></div>
+    </div>
+    <div class="swatch">
+      <div class="preview light" style="background: #b3b3ad;"><span class="label">--text-muted</span></div>
+      <div class="meta"><span class="name">text-muted</span><span class="hex">#b3b3ad</span></div>
+    </div>
+    <div class="swatch">
+      <div class="preview" style="background: #777771;"><span class="label">--text-dim</span></div>
+      <div class="meta"><span class="name">text-dim</span><span class="hex">#777771</span></div>
+    </div>
+  </div>
+
+  <h3>Semantic guide</h3>
+  <table class="sem-table">
+    <thead>
+      <tr><th style="width:140px;">Token</th><th>When to use</th><th style="width:200px;">Never</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="tag" style="background:#6c89ff;"></span><code>accent</code></td><td>The single signature color — Q-markers, source-card top stripe, primary edges in diagrams, the brand voice. One accent is enough.</td><td>Decorative fills; alternating with semantic colors.</td></tr>
+      <tr><td><span class="tag" style="background:#4ade80;"></span><code>ok</code></td><td>Tutorial checkpoints, “tip” callouts, A-marker in Q&amp;A, success states.</td><td>“This is a good book.” Not for opinion.</td></tr>
+      <tr><td><span class="tag" style="background:#fbbf24;"></span><code>warn</code></td><td>“Caution” callouts. Subtle hazards: approximations, deprecated methods.</td><td>Real danger — use <code>crit</code>.</td></tr>
+      <tr><td><span class="tag" style="background:#f87171;"></span><code>crit</code></td><td>“Critical” callouts. Things that will cost money, security, or correctness.</td><td>More than once per document.</td></tr>
+      <tr><td><span class="tag" style="background:#a78bfa;"></span><code>insight</code></td><td>Counter-intuitive observations, unexpected conclusions. Used for “insight” callouts and central nodes in concept maps.</td><td>Generic emphasis — that's <code>accent</code>.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     FOUNDATIONS — Typography
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="typography">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">02</span> Foundations</span>
+      <h2>Typography</h2>
+    </div>
+    <div class="right">Bricolage Grotesque · JetBrains Mono</div>
+  </div>
+
+  <p>Two families. Bricolage Grotesque is a variable grotesque with both a width and a weight axis — every heading in this document uses a slightly compressed width to give size without volume. JetBrains Mono is not just for code: it carries kickers, metadata labels, source IDs, timestamps, tags, and edge labels in diagrams. <strong>Mono is structural here, not decorative.</strong></p>
+
+  <div class="type-scale">
+    <div class="type-row">
+      <span class="lbl">h1 · title</span>
+      <span style="font-size: 38px; line-height: 1.05; letter-spacing: -0.035em; font-weight: 650; font-variation-settings: 'wght' 650, 'wdth' 88;">Compound interest</span>
+      <span class="spec">48 / 1.04 / -0.035em<br>wght 650 · wdth 88</span>
+    </div>
+    <div class="type-row">
+      <span class="lbl">h2 · section</span>
+      <span style="font-size: 24px; line-height: 1.15; letter-spacing: -0.025em; font-weight: 600;">How exponents bend time</span>
+      <span class="spec">28 / 1.15 / -0.025em<br>wght 600</span>
+    </div>
+    <div class="type-row">
+      <span class="lbl">h3 · subhead</span>
+      <span style="font-size: 17px; font-weight: 600; letter-spacing: -0.012em;">Why people miss it</span>
+      <span class="spec">17 / 1.3 / -0.012em<br>wght 600</span>
+    </div>
+    <div class="type-row">
+      <span class="lbl">body</span>
+      <span style="font-size: 15.5px;">The mathematics requires continuity. Pulling money out for a car, a renovation, or a crisis breaks the chain.</span>
+      <span class="spec">15.5 / 1.55<br>wght 400 · wdth 92</span>
+    </div>
+    <div class="type-row">
+      <span class="lbl">lede</span>
+      <span style="font-size: 18px; color: var(--text-muted); font-variation-settings: 'wght' 420, 'wdth' 92;">A reference for technical reading, built for the eye that is asking.</span>
+      <span class="spec">18 / 1.55<br>wght 420 · wdth 92</span>
+    </div>
+    <div class="type-row">
+      <span class="lbl">mono · kicker</span>
+      <span style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim);">§ 03 — chrome</span>
+      <span class="spec">11 mono / +0.08em<br>uppercase</span>
+    </div>
+    <div class="type-row">
+      <span class="lbl">mono · metadata</span>
+      <span style="font-family: var(--font-mono); font-size: 13px;">src_intelligent_investor · v.2003</span>
+      <span class="spec">13 mono · tabular</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     CHROME — Section header & meta
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="chrome-headers">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">03</span> Document chrome</span>
+      <h2>Section header &amp; meta</h2>
+    </div>
+    <div class="right">required on every section</div>
+  </div>
+
+  <p>Every section opens with a <code>.sect-head</code>: a mono kicker (numeric prefix + label), a title in sans, a hairline divider, and an optional right-aligned meta string in mono. The pattern is consistent enough that readers can scan by kicker alone.</p>
+
+  <div style="border: 1px solid var(--border); border-radius: var(--r-md); padding: 24px; background: var(--surface); margin: 14px 0;">
+    <div class="sect-head" style="margin-bottom: 12px;">
+      <div class="left">
+        <span class="kicker"><span class="num">07</span> Content</span>
+        <h2 style="font-size: 24px;">Definition</h2>
+      </div>
+      <div class="right">4 variants</div>
+    </div>
+    <p class="muted" style="margin: 0;">Body content begins here. The kicker uses <code>§</code> as a prefix and a mono numeric — a quiet anchor that lets the title carry visual weight.</p>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     CHROME — Prereq bar
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="chrome-prereq">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">04</span> Document chrome</span>
+      <h2>Prerequisites bar</h2>
+    </div>
+    <div class="right">optional</div>
+  </div>
+
+  <p>For tutorials and explainers that build on prior concepts, a prereq bar links to the dependencies. The label is mono uppercase; each prerequisite is a small monospaced chip.</p>
+
+  <div class="prereq">
+    <span class="lbl">Requires</span>
+    <span class="list">
+      <a href="#">arithmetic</a>
+      <a href="#">exponents</a>
+      <a href="#">time-value-of-money</a>
+      <a href="#">discount-rate</a>
+    </span>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     CHROME — Tags
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="chrome-tags">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">05</span> Document chrome</span>
+      <h2>Tags &amp; chips</h2>
+    </div>
+    <div class="right">.chip · .chip.accent · .chip.plain</div>
+  </div>
+
+  <p>Three flavors. The <code>#</code>-prefixed mono chip is the default tag. The accent variant is used for primary classifications. The plain variant — no hash — is for non-taxonomic labels (file types, status states).</p>
+
+  <h3>Default tags</h3>
+  <div class="chip-row">
+    <span class="chip">finance</span>
+    <span class="chip">value-investing</span>
+    <span class="chip">behavioral</span>
+    <span class="chip">long-term</span>
+    <span class="chip">graham</span>
+  </div>
+
+  <h3>Accent (primary classification)</h3>
+  <div class="chip-row">
+    <span class="chip accent">finance</span>
+    <span class="chip accent">philosophy</span>
+    <span class="chip accent">systems</span>
+    <span class="chip accent">epistemology</span>
+  </div>
+
+  <h3>Plain (non-taxonomic)</h3>
+  <div class="chip-row">
+    <span class="chip plain">PDF · 478 pp</span>
+    <span class="chip plain">verified 2026-05-12</span>
+    <span class="chip plain">ENGLISH</span>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     CONTENT — Source card
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="source">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">06</span> Content</span>
+      <h2>Source card</h2>
+    </div>
+    <div class="right">replaces <code>bookref</code></div>
+  </div>
+
+  <p>The source card cites a book or reading material as <em>structured data</em>. A mono ID identifies the source like a record key; the top stripe shows the source's primary classification color; the locator grid lays out chapter, page, ISBN, or section in mono — searchable, copyable, citable.</p>
+
+  <div class="source">
+    <div class="src-id">
+      <span class="id-pill">src_intelligent_investor</span>
+      <span class="id-dom">finance / value-investing</span>
+      <span class="id-status">verified · 2026-05-12</span>
+    </div>
+    <div class="src-title">The Intelligent Investor</div>
+    <div class="src-byline">Benjamin Graham · revised commentary by Jason Zweig (2003)</div>
+    <div class="src-locator">
+      <div class="cell"><span class="lbl">Chapter</span><span class="val">8</span></div>
+      <div class="cell"><span class="lbl">Title</span><span class="val">The Investor and Market Fluctuations</span></div>
+      <div class="cell"><span class="lbl">Pages</span><span class="val">188 — 225</span></div>
+      <div class="cell"><span class="lbl">Edition</span><span class="val">rev. 4th</span></div>
+    </div>
+    <div class="src-tags">
+      <span class="chip">value-investing</span>
+      <span class="chip">mr-market</span>
+      <span class="chip">margin-of-safety</span>
+    </div>
+  </div>
+
+  <div class="source ok">
+    <div class="src-id">
+      <span class="id-pill">src_ddia_kleppmann</span>
+      <span class="id-dom">technology / distributed-systems</span>
+      <span class="id-status">verified · 2026-05-08</span>
+    </div>
+    <div class="src-title">Designing Data-Intensive Applications</div>
+    <div class="src-byline">Martin Kleppmann · O'Reilly (2017)</div>
+    <div class="src-locator">
+      <div class="cell"><span class="lbl">Chapter</span><span class="val">5</span></div>
+      <div class="cell"><span class="lbl">Title</span><span class="val">Replication</span></div>
+      <div class="cell"><span class="lbl">Pages</span><span class="val">151 — 197</span></div>
+      <div class="cell"><span class="lbl">ISBN</span><span class="val">978-1449373320</span></div>
+    </div>
+    <div class="src-tags">
+      <span class="chip">replication</span>
+      <span class="chip">leader-follower</span>
+      <span class="chip">consistency</span>
+    </div>
+  </div>
+
+  <div class="source insight">
+    <div class="src-id">
+      <span class="id-pill">src_republic_plato</span>
+      <span class="id-dom">philosophy / metaphysics</span>
+      <span class="id-status">verified · 2026-05-01</span>
+    </div>
+    <div class="src-title">The Republic</div>
+    <div class="src-byline">Plato · trans. Allan Bloom (1968)</div>
+    <div class="src-locator">
+      <div class="cell"><span class="lbl">Book</span><span class="val">VII</span></div>
+      <div class="cell"><span class="lbl">Section</span><span class="val">514a — 520a</span></div>
+      <div class="cell"><span class="lbl">Topic</span><span class="val">the cave allegory</span></div>
+      <div class="cell"><span class="lbl">Tradition</span><span class="val">Bloom revision</span></div>
+    </div>
+    <div class="src-tags">
+      <span class="chip">epistemology</span>
+      <span class="chip">allegory</span>
+      <span class="chip">socratic</span>
+    </div>
+  </div>
+
+  <h3>Top-stripe modifiers</h3>
+  <p>The stripe color uses the same five semantic tokens. Most sources are <code>--accent</code> (default). Reserve <code>.ok</code> for technical reference, <code>.insight</code> for philosophy/theory, <code>.warn</code> for dated or partial sources, <code>.crit</code> for sources that should be read with skepticism (primary propaganda, contested histories).</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     CONTENT — Definition
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="def">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">07</span> Content</span>
+      <h2>Definition</h2>
+    </div>
+    <div class="right">smallest teaching unit</div>
+  </div>
+
+  <p>Definitions sit alone or stack. The term is in sans display weight; the etymology or pronunciation is in mono dim; the body is regular. The corner tag identifies the definition's domain in mono.</p>
+
+  <div class="def">
+    <span class="def-tag">def · finance</span>
+    <div class="def-term">Margin of safety</div>
+    <div class="def-etymon">/ˈmɑːʤɪn əv ˈseɪfti/ · coined by Graham (1934) in <em>Security Analysis</em></div>
+    <p class="def-body">The difference between a security's appraised value and the price you pay for it. The wider the margin, the less your forecast needs to be correct. A 30% margin protects against ordinary error; a 50% margin protects against significant error; nothing protects against fraud.</p>
+    <div class="def-see"><span class="lbl">See also</span><a href="#">intrinsic-value</a><a href="#">mr-market</a><a href="#">graham-number</a></div>
+  </div>
+
+  <div class="def">
+    <span class="def-tag">def · technology</span>
+    <div class="def-term">Idempotent</div>
+    <div class="def-etymon">/ˌaɪdɛmˈpoʊtənt/ · Latin <em>idem</em> (same) + <em>potens</em> (power)</div>
+    <p class="def-body">An operation that produces the same result whether it runs once or many times. <code>DELETE /user/42</code> is idempotent — calling it twice deletes the same user (the second call is a no-op). <code>POST /user</code> is not — calling it twice creates two users. Idempotence is what makes retries safe; it is the foundation of every reliable distributed system.</p>
+    <div class="def-see"><span class="lbl">See also</span><a href="#">retry-semantics</a><a href="#">exactly-once</a></div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     CONTENT — Q & A
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="qna">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">08</span> Content</span>
+      <h2>Question &amp; answer</h2>
+    </div>
+    <div class="right">centerpiece</div>
+  </div>
+
+  <p>The Q&amp;A block is the system's reason for existing. Each turn is mono-marked: <code>Q</code> in accent, <code>A</code> in ok-green. A relative timestamp sits beneath the marker. Answers are as long as the question requires; cite sources at the end with a <code>ref</code> chip.</p>
+
+  <div class="qna">
+    <div class="turn q">
+      <div class="marker"><span class="m">&gt; Q</span><span class="t">14:22</span></div>
+      <div class="body">If compound interest is so obviously valuable, why do most people fail to take advantage of it?</div>
+    </div>
+    <div class="turn a">
+      <div class="marker"><span class="m">&lt; A</span><span class="t">14:22</span></div>
+      <div class="body">
+        <p>Three reasons, in roughly descending order of importance.</p>
+        <p><strong>Time discounting.</strong> Compound growth is back-loaded — most of the gain accrues in the final third of the period. A 30-year investor sees their money double roughly every nine years at 8 %; the difference between year 20 and year 30 is almost the entire wealth-building period. Most people don't have, or won't commit to, a 30-year horizon.</p>
+        <p><strong>Behavioral interruption.</strong> The mathematics requires <em>continuity</em>. Pulling money out for a car, a renovation, or a crisis breaks the chain. The interest forgone isn't just the principal — it's all the future compounding that principal would have produced.</p>
+        <p><strong>Fees and taxes.</strong> Compounding works in both directions. A 1 % annual fee feels small; over 30 years it erodes roughly a third of the final balance. Tax-deferred accounts exist exactly to interrupt this counter-compounding.</p>
+        <p class="src-ref">sources <span class="ref">src_intelligent_investor</span> <span class="ref">src_bogle_common_sense</span></p>
+      </div>
+    </div>
+    <div class="turn q">
+      <div class="marker"><span class="m">&gt; Q</span><span class="t">14:28</span></div>
+      <div class="body">Is the Socratic method actually about asking questions, or about leading the student to a predetermined conclusion?</div>
+    </div>
+    <div class="turn a">
+      <div class="marker"><span class="m">&lt; A</span><span class="t">14:28</span></div>
+      <div class="body">
+        <p>In Plato's dialogues, both. The historical Socrates — insofar as we can reconstruct him — appears to have practiced <em>elenchus</em>: a sequence of questions designed to expose contradictions in the interlocutor's beliefs. The end-state was <em>aporia</em>, perplexity, not agreement with Socrates.</p>
+        <p>Plato's later dialogues, however, increasingly use the question form as a rhetorical scaffold — the student "discovers" answers Plato has already decided on. Modern uses of the term tend to flatten this distinction, which is why "Socratic teaching" can mean either genuine open inquiry or guided revelation depending on who's using it.</p>
+        <p class="src-ref">source <span class="ref">src_republic_plato</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     CONTENT — Tutorial
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="tutorial">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">09</span> Content</span>
+      <h2>Tutorial step</h2>
+    </div>
+    <div class="right">numbered · progress · checkpoint</div>
+  </div>
+
+  <p>Tutorial steps run sequentially with a progress bar at the top. Each step gets a mono <code>NN / total</code> index and an optional checkpoint — a small ok-green block the reader can verify before moving on. Cluster size: 3–7 steps; beyond that, split with a summary capsule between.</p>
+
+  <div class="tutorial-wrap">
+    <div class="tutorial-progress">
+      <span class="done"></span><span class="done"></span><span class="done"></span><span class="curr"></span><span></span>
+    </div>
+    <div class="step">
+      <div class="index">01 <span class="total">/ 05</span></div>
+      <div>
+        <div class="title">Pick a horizon, not a return</div>
+        <div class="body"><p>Decide first how long the money will be allowed to compound. Returns are largely outside your control; horizon is largely within it. A 30-year horizon at 6 % beats a 10-year horizon at 12 % for the same starting principal.</p></div>
+        <div class="check"><span class="lbl">Checkpoint</span><span>Write down your horizon in years. If you cannot commit to it, shorten it until you can.</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="index">02 <span class="total">/ 05</span></div>
+      <div>
+        <div class="title">Estimate a realistic rate</div>
+        <div class="body"><p>For a diversified global equity portfolio, 6 – 8 % real (after inflation) is the historical band. For bonds, 1 – 3 %. Mix them by the proportion that lets you sleep. Do not use rates from the best decade you can remember.</p></div>
+        <div class="check"><span class="lbl">Checkpoint</span><span>Your number should be below, not above, the long-run S&amp;P 500 average. If it isn't, lower it.</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="index">03 <span class="total">/ 05</span></div>
+      <div>
+        <div class="title">Apply the formula</div>
+        <div class="body"><p>Future value <code>FV = P × (1 + r)ⁿ</code>, where <code>P</code> is principal, <code>r</code> is the annual rate (decimal), and <code>n</code> is years. For monthly contributions the formula extends — but a one-shot calculation is enough to internalize the shape.</p></div>
+        <div class="check"><span class="lbl">Checkpoint</span><span>For a 30-year, 6% calculation your result should be roughly 5–6× principal. If it isn't, you raised the rate to a power instead of multiplying.</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="index">04 <span class="total">/ 05</span></div>
+      <div>
+        <div class="title">Subtract the leak</div>
+        <div class="body"><p>Identify the largest leak in your real situation — fees, taxes, lifestyle inflation, mid-period withdrawals — and re-run the calculation with that drag added. The honest number is always smaller than the textbook one.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout tip" style="margin-top: 20px;">
+    <span class="lbl">// tip</span>
+    <p>Tutorial steps work best in clusters of 3 – 7. Beyond seven, split into two sequential tutorials with a summary capsule in between.</p>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     CONTENT — Worked example
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="worked">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">10</span> Content</span>
+      <h2>Worked example</h2>
+    </div>
+    <div class="right">problem · approach · solution</div>
+  </div>
+
+  <p>Three rigid parts in fixed order, each labeled with a mono <code>//</code> prefix. The structure is the point — without it the reader cannot tell where the reasoning ends and the answer begins.</p>
+
+  <div class="worked">
+    <div class="part">
+      <div class="part-label"><span>problem</span><span class="step">01</span></div>
+      <div class="part-body">
+        <p>You invest <strong>$10,000</strong> at <strong>6 % annual return</strong> for <strong>30 years</strong>. Friend invests $10,000 at 9 % for <strong>20 years</strong>. Both make no withdrawals. Who ends with more, and by roughly what factor?</p>
+      </div>
+    </div>
+    <div class="part">
+      <div class="part-label"><span>approach</span><span class="step">02</span></div>
+      <div class="part-body">
+        <p>Apply <code>FV = P × (1 + r)ⁿ</code> to each. The intuition trap: 9 % feels much better than 6 %, so the gut says <em>friend wins</em>. But (1 + r) is multiplied by itself <em>n</em> times — small differences in <em>n</em> matter as much as differences in <em>r</em>, often more.</p>
+      </div>
+    </div>
+    <div class="part">
+      <div class="part-label"><span>solution</span><span class="step">03</span></div>
+      <div class="part-body">
+        <p>You: <code>10,000 × (1.06)³⁰ ≈ 57,435</code>. Friend: <code>10,000 × (1.09)²⁰ ≈ 56,044</code>.</p>
+        <p>You end with <strong>~$1,400 more</strong> — despite a 50 % lower rate — because you compounded ten more years. The principle: <strong>horizon dominates rate at long durations</strong>. This is also why starting at 25 vs. 35 changes outcomes more than picking the "right" fund.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     CONTENT — Summary capsule
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="capsule">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">11</span> Content</span>
+      <h2>Summary capsule</h2>
+    </div>
+    <div class="right">TL;DR · one per long piece</div>
+  </div>
+
+  <p>The capsule replaces a generic "TL;DR." It has a mono accent label, a single bold gist sentence, and optionally a short bullet list of supporting claims. Use it at the top of any piece longer than five sections.</p>
+
+  <div class="capsule">
+    <div class="lbl">TL;DR</div>
+    <div class="gist">Compound interest rewards horizon more than rate, but only if the chain is unbroken — and the chain almost always breaks.</div>
+    <ul>
+      <li>Most of the growth happens in the final third of the period.</li>
+      <li>A 1 % fee compounds against you the same way returns compound for you.</li>
+      <li>The single highest-leverage move is starting earlier, not picking better.</li>
+      <li>Tax-deferred accounts exist to interrupt counter-compounding.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     CONTENT — Excerpt
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="excerpt">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">12</span> Content</span>
+      <h2>Excerpt</h2>
+    </div>
+    <div class="right">pull-quote · mono attribution</div>
+  </div>
+
+  <p>For quotations from a source. The accent rail marks it as not-the-author's-voice; the attribution is mono, sober, locator-style.</p>
+
+  <div class="excerpt">
+    <div class="quote">The intelligent investor is a realist who sells to optimists and buys from pessimists.</div>
+    <div class="attr">graham · intelligent-investor · ch.8 · p.205</div>
+  </div>
+
+  <div class="excerpt">
+    <div class="quote">An unexamined life is not worth living for a human being.</div>
+    <div class="attr">plato · apology · 38a</div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     CONTENT — Callouts
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="callouts">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">13</span> Content</span>
+      <h2>Callouts</h2>
+    </div>
+    <div class="right">5 variants</div>
+  </div>
+
+  <p>Five flat, semantic callouts. Left border in semantic color, mono uppercase label, body text. Use exactly one variant per concern; mixing them in a paragraph confuses the visual hierarchy.</p>
+
+  <div class="callout note">
+    <span class="lbl">// note</span>
+    <p>The exponential function <code>eˣ</code> is special because its derivative equals itself. This self-referential property is why compound growth never stabilizes — the slope at every point is proportional to where you already are.</p>
+  </div>
+  <div class="callout tip">
+    <span class="lbl">// tip</span>
+    <p>When estimating compound growth in your head, use "double-twice-then-half" — a 6 % rate over 30 years means roughly five doublings, so multiply by 32 and reduce slightly.</p>
+  </div>
+  <div class="callout insight">
+    <span class="lbl">// insight</span>
+    <p>Every model is wrong; some are useful. Box's aphorism applies as much to financial models as to statistical ones — the question is never "is this true?" but "is this useful for the decision in front of me?"</p>
+  </div>
+  <div class="callout caution">
+    <span class="lbl">// caution</span>
+    <p>Most people confuse <em>nominal</em> with <em>real</em> returns. A 7 % nominal return at 3 % inflation is closer to 4 % real. Compound the wrong one for 30 years and the error dominates everything else.</p>
+  </div>
+  <div class="callout critical">
+    <span class="lbl">// critical</span>
+    <p>Past returns predict future returns weakly at best. The S&amp;P 500 has averaged ~10 % nominal historically — but starting valuations matter, and a high-valuation start can produce a decade of below-average returns. Don't plan a life on a regression line.</p>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     CONTENT — Comparison table
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="compare">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">14</span> Content</span>
+      <h2>Comparison table</h2>
+    </div>
+    <div class="right">tabular figures · mono headers</div>
+  </div>
+
+  <p>Two-way comparisons. The first column is the dimension (sans, semibold); subsequent columns are the things being compared. Numbers right-align with tabular figures so they sit in columns. Headers in mono uppercase.</p>
+
+  <table class="compare">
+    <thead>
+      <tr><th>Dimension</th><th>Simple interest</th><th>Compound interest</th></tr>
+    </thead>
+    <tbody>
+      <tr><th>Growth shape</th><td>Linear — constant slope</td><td>Exponential — accelerating slope</td></tr>
+      <tr><th>What grows each period</th><td>Only the original principal</td><td>Principal + all previously accrued interest</td></tr>
+      <tr><th>Formula</th><td><span class="mono">P + P·r·n</span></td><td><span class="mono">P × (1 + r)ⁿ</span></td></tr>
+      <tr><th>$10k @ 6 % · 30y</th><td class="num mono">$28,000</td><td class="num mono">$57,435</td></tr>
+      <tr><th>Where it appears</th><td>Some short-term loans, certain bond coupons</td><td>Equity returns, savings accounts, almost everything that matters</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     CONTENT — Code & terminal
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="code">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">15</span> Content</span>
+      <h2>Code &amp; terminal</h2>
+    </div>
+    <div class="right">.code-block · .term</div>
+  </div>
+
+  <p>The <code>.code-block</code> shows source with a filename in the header, a language tag, line numbers in a left gutter, and sober syntax highlighting. The <code>.term</code> simulates a terminal session — always dark, regardless of page theme.</p>
+
+  <div class="code-block">
+    <div class="code-head">
+      <span class="file">compound.py</span>
+      <span class="lang">python</span>
+    </div>
+    <div class="code-body">
+      <div class="gutter"><div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div><div>8</div><div>9</div><div>10</div></div>
+<pre><code><span class="tok-c"># Future value of compounding contributions</span>
+<span class="tok-k">def</span> <span class="tok-t">future_value</span>(principal, rate, years):
+    <span class="tok-s">"""Apply FV = P × (1 + r)ⁿ — the foundational formula."""</span>
+    <span class="tok-k">return</span> principal * (<span class="tok-n">1</span> + rate) ** years
+
+
+<span class="tok-c"># Worked example from § 10 above</span>
+you    = <span class="tok-t">future_value</span>(<span class="tok-n">10_000</span>, <span class="tok-n">0.06</span>, <span class="tok-n">30</span>)
+friend = <span class="tok-t">future_value</span>(<span class="tok-n">10_000</span>, <span class="tok-n">0.09</span>, <span class="tok-n">20</span>)
+<span class="tok-k">print</span>(<span class="tok-s">f"You: {you:,.0f}  ·  Friend: {friend:,.0f}"</span>)</code></pre>
+    </div>
+  </div>
+
+  <div class="term">
+    <div class="term-head">
+      <span class="dots"><span></span><span></span><span></span></span>
+      <span class="label">~/knowledge-guide  ·  zsh</span>
+    </div>
+<pre><span class="p">$</span> python compound.py
+<span class="o">You: 57,435  ·  Friend: 56,044</span>
+
+<span class="p">$</span> python -c <span class="o">"print(round(57435/56044, 3))"</span>
+<span class="o">1.025</span>
+
+<span class="d"># 50% lower rate, 10 more years, and you still come out ahead.</span>
+<span class="p">$</span></pre>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     CONTENT — Bibliography
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="biblio">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">16</span> Content</span>
+      <h2>Bibliography</h2>
+    </div>
+    <div class="right">indexed · referenced inline</div>
+  </div>
+
+  <p>Mono-indexed list, ordered by first reference in the document. Each entry shows title (semibold), author/year (muted), and a domain pill. Source IDs in Q&amp;A and elsewhere refer here.</p>
+
+  <ol class="biblio">
+    <li>
+      <span class="idx">[01]</span>
+      <div class="citation">
+        <div class="t">The Intelligent Investor</div>
+        <div class="b">Benjamin Graham · rev. Jason Zweig · 2003 · src_intelligent_investor</div>
+      </div>
+      <span class="domain">finance</span>
+    </li>
+    <li>
+      <span class="idx">[02]</span>
+      <div class="citation">
+        <div class="t">Designing Data-Intensive Applications</div>
+        <div class="b">Martin Kleppmann · O'Reilly · 2017 · src_ddia_kleppmann</div>
+      </div>
+      <span class="domain">technology</span>
+    </li>
+    <li>
+      <span class="idx">[03]</span>
+      <div class="citation">
+        <div class="t">The Republic</div>
+        <div class="b">Plato · trans. Allan Bloom · 1968 · src_republic_plato</div>
+      </div>
+      <span class="domain">philosophy</span>
+    </li>
+    <li>
+      <span class="idx">[04]</span>
+      <div class="citation">
+        <div class="t">The Little Book of Common Sense Investing</div>
+        <div class="b">John C. Bogle · Wiley · 2017 · src_bogle_common_sense</div>
+      </div>
+      <span class="domain">finance</span>
+    </li>
+  </ol>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     DIAGRAMS — Plate showcase
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="plate">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">17</span> Tier 1 plate</span>
+      <h2>The plate</h2>
+    </div>
+    <div class="right">grid · header bar · single-tone</div>
+  </div>
+
+  <p>A plate is a sectioned diagram surface — a top bar with a mono figure ID and a caption strip, a faint grid background, and the diagram itself centered inside. Schematic, not ornamental. This build is pinned dark — near-black surface with a faint grid background.</p>
+
+  <div class="plate">
+    <div class="plate-head">
+      <span>fig · <span class="id">plate-frame</span></span>
+      <span>pinned dark</span>
+    </div>
+    <div class="plate-body">
+      <svg viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg">
+        <text x="20" y="34" class="zone-label">FIG · PLATE-FRAME</text>
+        <line x1="20" y1="46" x2="780" y2="46" stroke="currentColor" stroke-opacity="0.12" stroke-dasharray="3 3"/>
+        <text x="400" y="120" text-anchor="middle" class="node-label" style="font-size: 17px;">A sectioned surface for a single diagram</text>
+        <text x="400" y="148" text-anchor="middle" class="node-sub">header bar · faint grid · centered body · optional caption</text>
+      </svg>
+    </div>
+    <div class="plate-caption"><span class="num">fig 17.0</span>The plate frame in isolation. Used as a base for all Tier-1 diagrams.</div>
+  </div>
+
+  <div class="callout note" style="margin-top: 20px;">
+    <span class="lbl">// design</span>
+    <p>Plates inherit the page tone rather than forcing a separate stage like the threat-report's forced-dark hero. This build is pinned dark; the plate reads as continuous with the page, not a tonal interruption.</p>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     DIAGRAMS — Concept map
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="plate-concept">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">18</span> Tier 1 plate</span>
+      <h2>Concept map</h2>
+    </div>
+    <div class="right">central concept · spokes</div>
+  </div>
+
+  <p>A central concept with branching related ideas. The center node uses the accent fill (cobalt) — it's the topic the diagram is <em>about</em>. Spokes are plain nodes. Edges are orthogonal lines, not curves; this is a deliberate departure from the scholarly variant of this system, where edges were drawn freehand. Mono pill labels on each edge state the relationship.</p>
+
+  <div class="plate">
+    <div class="plate-head">
+      <span>fig · <span class="id">concept-map</span></span>
+      <span>compound interest &amp; neighbors</span>
+    </div>
+    <div class="plate-body">
+      <svg viewBox="0 0 800 380" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="cm-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" class="arrow"/>
+          </marker>
+        </defs>
+
+        <text x="20" y="26" class="zone-label">CONCEPT MAP · COMPOUND INTEREST</text>
+        <line x1="20" y1="38" x2="780" y2="38" stroke="currentColor" stroke-opacity="0.12" stroke-dasharray="3 3"/>
+
+        <!-- Central node -->
+        <g transform="translate(400 200)">
+          <rect x="-90" y="-32" width="180" height="64" rx="6" class="node-accent"/>
+          <text y="-4" class="node-label" style="fill: var(--plate-accent);">Compound interest</text>
+          <text y="14" class="node-sub" style="fill: var(--plate-accent);">concept · finance</text>
+        </g>
+
+        <!-- Spoke: Principal (top-left) -->
+        <g transform="translate(180 100)">
+          <rect x="-72" y="-26" width="144" height="52" rx="6" class="node-bg"/>
+          <text y="-3" class="node-label">Principal</text>
+          <text y="13" class="node-sub">starting amount</text>
+        </g>
+        <!-- Spoke: Time (top-right) -->
+        <g transform="translate(620 100)">
+          <rect x="-72" y="-26" width="144" height="52" rx="6" class="node-bg"/>
+          <text y="-3" class="node-label">Time</text>
+          <text y="13" class="node-sub">active ingredient</text>
+        </g>
+        <!-- Spoke: Rule of 72 (bottom-center) -->
+        <g transform="translate(400 320)">
+          <rect x="-72" y="-26" width="144" height="52" rx="6" class="node-bg"/>
+          <text y="-3" class="node-label">Rule of 72</text>
+          <text y="13" class="node-sub">doubling estimate</text>
+        </g>
+        <!-- Spoke: Fees (bottom-left) -->
+        <g transform="translate(180 300)">
+          <rect x="-72" y="-26" width="144" height="52" rx="6" class="node-bg-2"/>
+          <text y="-3" class="node-label">Fees</text>
+          <text y="13" class="node-sub">counter-compound</text>
+        </g>
+        <!-- Spoke: Annuity (bottom-right) -->
+        <g transform="translate(620 300)">
+          <rect x="-72" y="-26" width="144" height="52" rx="6" class="node-bg-2"/>
+          <text y="-3" class="node-label">Annuity</text>
+          <text y="13" class="node-sub">recurring payments</text>
+        </g>
+
+        <!-- Orthogonal edges to center -->
+        <!-- principal → center (down-then-right) -->
+        <path d="M 252 100 L 295 100 L 295 180 L 310 180" class="edge" marker-end="url(#cm-arr)"/>
+        <!-- time → center (down-then-left) -->
+        <path d="M 548 100 L 505 100 L 505 180 L 490 180" class="edge" marker-end="url(#cm-arr)"/>
+        <!-- rule of 72 → center (up) -->
+        <path d="M 400 294 L 400 232" class="edge" marker-end="url(#cm-arr)"/>
+        <!-- fees → center (up-then-right) -->
+        <path d="M 252 300 L 295 300 L 295 220 L 310 220" class="edge" marker-end="url(#cm-arr)"/>
+        <!-- annuity → center (up-then-left) -->
+        <path d="M 548 300 L 505 300 L 505 220 L 490 220" class="edge" marker-end="url(#cm-arr)"/>
+
+        <!-- Edge labels (mono pills) -->
+        <g transform="translate(290 145)"><rect x="-38" y="-10" width="76" height="20" rx="3" class="edge-label-bg"/><text y="4" class="edge-label">depends on</text></g>
+        <g transform="translate(510 145)"><rect x="-38" y="-10" width="76" height="20" rx="3" class="edge-label-bg"/><text y="4" class="edge-label">amplified by</text></g>
+        <g transform="translate(400 264)"><rect x="-32" y="-10" width="64" height="20" rx="3" class="edge-label-bg"/><text y="4" class="edge-label">measures</text></g>
+        <g transform="translate(290 255)"><rect x="-26" y="-10" width="52" height="20" rx="3" class="edge-label-bg"/><text y="4" class="edge-label">erodes</text></g>
+        <g transform="translate(510 255)"><rect x="-32" y="-10" width="64" height="20" rx="3" class="edge-label-bg"/><text y="4" class="edge-label">extends to</text></g>
+      </svg>
+    </div>
+    <div class="plate-caption"><span class="num">fig 18.1</span>The center concept is cobalt; orthogonal paths route around obstacles rather than through them.</div>
+    <div class="diag-legend">
+      <span><i style="background: var(--accent-bg); border-color: var(--accent);"></i>Central concept</span>
+      <span><i style="background: var(--surface); border-color: var(--text);"></i>Foundational</span>
+      <span><i style="background: var(--surface-2); border-color: var(--text-muted);"></i>Related</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     DIAGRAMS — Taxonomy tree
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="plate-taxonomy">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">19</span> Tier 1 plate</span>
+      <h2>Taxonomy tree</h2>
+    </div>
+    <div class="right">hierarchical · orthogonal</div>
+  </div>
+
+  <p>A horizontal taxonomy reads left-to-right: root, branches, leaves. Levels deeper than three should flip vertical. Connectors are right-angle steps — no organic curves. Leaf nodes can be semantic-colored when the taxonomy includes risk or quality dimensions.</p>
+
+  <div class="plate">
+    <div class="plate-head">
+      <span>fig · <span class="id">taxonomy</span></span>
+      <span>investment vehicles · 3 levels</span>
+    </div>
+    <div class="plate-body">
+      <svg viewBox="0 0 800 440" xmlns="http://www.w3.org/2000/svg">
+        <text x="20" y="26" class="zone-label">TAXONOMY · INVESTMENT VEHICLES</text>
+        <line x1="20" y1="38" x2="780" y2="38" stroke="currentColor" stroke-opacity="0.12" stroke-dasharray="3 3"/>
+
+        <!-- ROOT (left) -->
+        <g transform="translate(70 220)">
+          <rect x="0" y="-32" width="140" height="64" rx="6" class="node-accent"/>
+          <text x="70" y="-4" class="node-label" style="fill: var(--plate-accent);">Investment</text>
+          <text x="70" y="14" class="node-label" style="fill: var(--plate-accent);">vehicles</text>
+        </g>
+
+        <!-- LEVEL 2 (middle) -->
+        <g transform="translate(330 100)">
+          <rect x="0" y="-22" width="140" height="44" rx="6" class="node-bg"/>
+          <text x="70" y="5" class="node-label">Equities</text>
+        </g>
+        <g transform="translate(330 220)">
+          <rect x="0" y="-22" width="140" height="44" rx="6" class="node-bg"/>
+          <text x="70" y="5" class="node-label">Fixed income</text>
+        </g>
+        <g transform="translate(330 340)">
+          <rect x="0" y="-22" width="140" height="44" rx="6" class="node-bg"/>
+          <text x="70" y="5" class="node-label">Alternatives</text>
+        </g>
+
+        <!-- LEVEL 3 leaves (right) - equities -->
+        <g transform="translate(580 60)">
+          <rect x="0" y="-19" width="160" height="38" rx="5" class="node-bg-2"/>
+          <text x="80" y="5" class="node-label-2">Individual stocks</text>
+        </g>
+        <g transform="translate(580 130)">
+          <rect x="0" y="-19" width="160" height="38" rx="5" class="node-bg-2"/>
+          <text x="80" y="5" class="node-label-2">Index funds / ETFs</text>
+        </g>
+        <!-- fixed income leaves -->
+        <g transform="translate(580 200)">
+          <rect x="0" y="-19" width="160" height="38" rx="5" class="node-bg-2"/>
+          <text x="80" y="5" class="node-label-2">Government bonds</text>
+        </g>
+        <g transform="translate(580 250)">
+          <rect x="0" y="-19" width="160" height="38" rx="5" class="node-bg-2"/>
+          <text x="80" y="5" class="node-label-2">Corporate bonds</text>
+        </g>
+        <!-- alt leaves -->
+        <g transform="translate(580 320)">
+          <rect x="0" y="-19" width="160" height="38" rx="5" class="node-bg-2"/>
+          <text x="80" y="5" class="node-label-2">Real estate</text>
+        </g>
+        <g transform="translate(580 390)">
+          <rect x="0" y="-19" width="160" height="38" rx="5" class="node-bg-2"/>
+          <text x="80" y="5" class="node-label-2">Commodities &amp; crypto</text>
+        </g>
+
+        <!-- Root → level 2 (orthogonal stepped lines) -->
+        <path d="M 210 220 L 270 220 L 270 100 L 330 100" class="edge"/>
+        <path d="M 210 220 L 330 220" class="edge"/>
+        <path d="M 210 220 L 270 220 L 270 340 L 330 340" class="edge"/>
+
+        <!-- Level 2 → leaves -->
+        <path d="M 470 100 L 525 100 L 525 60 L 580 60" class="edge"/>
+        <path d="M 470 100 L 525 100 L 525 130 L 580 130" class="edge"/>
+
+        <path d="M 470 220 L 525 220 L 525 200 L 580 200" class="edge"/>
+        <path d="M 470 220 L 525 220 L 525 250 L 580 250" class="edge"/>
+
+        <path d="M 470 340 L 525 340 L 525 320 L 580 320" class="edge"/>
+        <path d="M 470 340 L 525 340 L 525 390 L 580 390" class="edge"/>
+      </svg>
+    </div>
+    <div class="plate-caption"><span class="num">fig 19.1</span>The root carries the accent. Levels deeper than three should flip vertical.</div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     DIAGRAMS — Mental model
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="plate-mental">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">20</span> Tier 1 plate</span>
+      <h2>Mental model framework</h2>
+    </div>
+    <div class="right">named framework · feedback</div>
+  </div>
+
+  <p>A named framework with labeled stages and a feedback edge that distinguishes a loop from a sequence. Below is the classic OODA loop — Observe, Orient, Decide, Act. The dashed accent edge says <em>this is not a sequence</em>; the diagram's structure is its argument.</p>
+
+  <div class="plate">
+    <div class="plate-head">
+      <span>fig · <span class="id">mental-model</span></span>
+      <span>OODA loop · Boyd</span>
+    </div>
+    <div class="plate-body">
+      <svg viewBox="0 0 800 280" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="mm-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" class="arrow"/>
+          </marker>
+          <marker id="mm-arr-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" class="arrow-emph"/>
+          </marker>
+        </defs>
+
+        <text x="20" y="26" class="zone-label">MENTAL MODEL · OODA</text>
+        <line x1="20" y1="38" x2="780" y2="38" stroke="currentColor" stroke-opacity="0.12" stroke-dasharray="3 3"/>
+
+        <!-- Four nodes in a row -->
+        <g transform="translate(70 130)">
+          <rect x="0" y="-30" width="140" height="60" rx="6" class="node-bg"/>
+          <text x="70" y="-5" class="node-label">Observe</text>
+          <text x="70" y="14" class="node-sub">gather data</text>
+        </g>
+        <g transform="translate(250 130)">
+          <rect x="0" y="-30" width="140" height="60" rx="6" class="node-bg"/>
+          <text x="70" y="-5" class="node-label">Orient</text>
+          <text x="70" y="14" class="node-sub">build model</text>
+        </g>
+        <g transform="translate(430 130)">
+          <rect x="0" y="-30" width="140" height="60" rx="6" class="node-bg"/>
+          <text x="70" y="-5" class="node-label">Decide</text>
+          <text x="70" y="14" class="node-sub">pick a course</text>
+        </g>
+        <g transform="translate(610 130)">
+          <rect x="0" y="-30" width="140" height="60" rx="6" class="node-accent"/>
+          <text x="70" y="-5" class="node-label" style="fill: var(--plate-accent);">Act</text>
+          <text x="70" y="14" class="node-sub" style="fill: var(--plate-accent);">execute &amp; commit</text>
+        </g>
+
+        <!-- Forward edges -->
+        <line x1="210" y1="130" x2="246" y2="130" class="edge" marker-end="url(#mm-arr)"/>
+        <line x1="390" y1="130" x2="426" y2="130" class="edge" marker-end="url(#mm-arr)"/>
+        <line x1="570" y1="130" x2="606" y2="130" class="edge" marker-end="url(#mm-arr)"/>
+
+        <!-- Forward edge labels -->
+        <g transform="translate(228 116)"><rect x="-22" y="-10" width="44" height="18" rx="3" class="edge-label-bg"/><text y="3" class="edge-label">filter</text></g>
+        <g transform="translate(408 116)"><rect x="-32" y="-10" width="64" height="18" rx="3" class="edge-label-bg"/><text y="3" class="edge-label">synthesize</text></g>
+        <g transform="translate(588 116)"><rect x="-24" y="-10" width="48" height="18" rx="3" class="edge-label-bg"/><text y="3" class="edge-label">commit</text></g>
+
+        <!-- Feedback edge (dashed, accent, curved) -->
+        <path d="M 680 162 C 680 232, 140 232, 140 168" class="edge-feedback" marker-end="url(#mm-arr-acc)"/>
+        <g transform="translate(400 235)"><rect x="-92" y="-10" width="184" height="20" rx="3" class="edge-label-bg" style="stroke: var(--plate-accent); stroke-width: 1.2;"/><text y="4" class="edge-label-emph">outcome feeds next observation</text></g>
+      </svg>
+    </div>
+    <div class="plate-caption"><span class="num">fig 20.1</span>Forward edges are solid slate; the feedback edge is dashed accent. Asymmetry is intentional.</div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     DIAGRAMS — Tier 2 shape vocabulary
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="illus-shapes">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">21</span> Tier 2 inline</span>
+      <h2>Shape vocabulary</h2>
+    </div>
+    <div class="right">.illus · semantic ramps via CSS</div>
+  </div>
+
+  <p>Inline diagrams (<code>.illus</code>) live in the prose without a plate frame. They inherit the page's semantic colors through CSS variables — so the same diagram restyles automatically across themes. Six node variants by semantic role:</p>
+
+  <svg viewBox="0 0 800 130" class="illus" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(80 65)">
+      <rect x="-58" y="-26" width="116" height="52" rx="6" class="il-node"/>
+      <text y="-4" class="il-label">Neutral</text>
+      <text y="13" class="il-sub">il-node</text>
+    </g>
+    <g transform="translate(220 65)">
+      <rect x="-58" y="-26" width="116" height="52" rx="6" class="il-node-acc"/>
+      <text y="-4" class="il-label il-label-acc">Topic</text>
+      <text y="13" class="il-sub">.il-node-acc</text>
+    </g>
+    <g transform="translate(360 65)">
+      <rect x="-58" y="-26" width="116" height="52" rx="6" class="il-node-ok"/>
+      <text y="-4" class="il-label il-label-ok">Success</text>
+      <text y="13" class="il-sub">.il-node-ok</text>
+    </g>
+    <g transform="translate(500 65)">
+      <rect x="-58" y="-26" width="116" height="52" rx="6" class="il-node-warn"/>
+      <text y="-4" class="il-label il-label-warn">Caution</text>
+      <text y="13" class="il-sub">.il-node-warn</text>
+    </g>
+    <g transform="translate(640 65)">
+      <rect x="-58" y="-26" width="116" height="52" rx="6" class="il-node-crit"/>
+      <text y="-4" class="il-label il-label-crit">Critical</text>
+      <text y="13" class="il-sub">.il-node-crit</text>
+    </g>
+    <g transform="translate(770 65)">
+      <rect x="-26" y="-26" width="0" height="0" />
+    </g>
+  </svg>
+
+  <p>And the insight variant (used for counter-intuitive observations or central nodes in concept maps):</p>
+
+  <svg viewBox="0 0 800 90" class="illus" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(80 45)">
+      <rect x="-58" y="-26" width="116" height="52" rx="6" class="il-node-ins"/>
+      <text y="-4" class="il-label il-label-ins">Insight</text>
+      <text y="13" class="il-sub">.il-node-ins</text>
+    </g>
+  </svg>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     DIAGRAMS — Inline flow
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="illus-flow">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">22</span> Tier 2 inline</span>
+      <h2>Explanation flow</h2>
+    </div>
+    <div class="right">orthogonal · 4–6 nodes</div>
+  </div>
+
+  <p>A short sequential diagram for explaining how something works. Each node is one step; mono pill labels on edges narrate the transition. Use four to six nodes — beyond that, promote to a Tier 1 plate.</p>
+
+  <svg viewBox="0 0 800 140" class="illus" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="il-arr-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" class="il-arrow"/>
+      </marker>
+      <marker id="il-arr-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" class="il-arrow-emph"/>
+      </marker>
+    </defs>
+
+    <g transform="translate(75 70)">
+      <rect x="-58" y="-26" width="116" height="52" rx="6" class="il-node"/>
+      <text y="-4" class="il-label">Question</text>
+      <text y="13" class="il-sub">user input</text>
+    </g>
+    <g transform="translate(245 70)">
+      <rect x="-58" y="-26" width="116" height="52" rx="6" class="il-node"/>
+      <text y="-4" class="il-label">Retrieve</text>
+      <text y="13" class="il-sub">match sources</text>
+    </g>
+    <g transform="translate(415 70)">
+      <rect x="-58" y="-26" width="116" height="52" rx="6" class="il-node-ins"/>
+      <text y="-4" class="il-label il-label-ins">Synthesize</text>
+      <text y="13" class="il-sub">build answer</text>
+    </g>
+    <g transform="translate(585 70)">
+      <rect x="-58" y="-26" width="116" height="52" rx="6" class="il-node"/>
+      <text y="-4" class="il-label">Cite</text>
+      <text y="13" class="il-sub">link sources</text>
+    </g>
+    <g transform="translate(725 70)">
+      <rect x="-50" y="-26" width="100" height="52" rx="6" class="il-node-ok"/>
+      <text y="-4" class="il-label il-label-ok">Answer</text>
+      <text y="13" class="il-sub">to reader</text>
+    </g>
+
+    <line x1="133" y1="70" x2="187" y2="70" class="il-edge" marker-end="url(#il-arr-1)"/>
+    <line x1="303" y1="70" x2="357" y2="70" class="il-edge" marker-end="url(#il-arr-1)"/>
+    <line x1="473" y1="70" x2="527" y2="70" class="il-edge-emph" marker-end="url(#il-arr-2)"/>
+    <line x1="643" y1="70" x2="675" y2="70" class="il-edge" marker-end="url(#il-arr-1)"/>
+
+    <g transform="translate(160 55)"><rect x="-22" y="-10" width="44" height="18" rx="3" class="il-pill-bg"/><text y="3" class="il-pill-text">parse</text></g>
+    <g transform="translate(330 55)"><rect x="-26" y="-10" width="52" height="18" rx="3" class="il-pill-bg"/><text y="3" class="il-pill-text">rank·k</text></g>
+    <g transform="translate(500 55)"><rect x="-26" y="-10" width="52" height="18" rx="3" class="il-pill-bg" style="stroke: var(--accent);"/><text y="3" class="il-pill-text" style="fill: var(--accent-text);">compose</text></g>
+  </svg>
+
+  <p class="muted" style="font-size: 13.5px;">Above: the Knowledge Guide's own answer pipeline. The synthesize step is highlighted as the load-bearing operation; the answer node is ok-green because it represents a successful terminal state.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     DIAGRAMS — 2x2 matrix
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="illus-matrix">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">23</span> Tier 2 inline</span>
+      <h2>2×2 matrix</h2>
+    </div>
+    <div class="right">two axes · four quadrants</div>
+  </div>
+
+  <p>For arguments shaped like "what happens when you cross these two dimensions." Axes labeled at the ends in mono; quadrants labeled by their semantic outcome. The matrix below maps investment risk × horizon — the diagonal tells the lesson.</p>
+
+  <svg viewBox="0 0 700 460" class="illus" xmlns="http://www.w3.org/2000/svg" style="max-width: 600px; margin: 16px auto;">
+    <!-- Axes -->
+    <line x1="100" y1="60" x2="100" y2="380" stroke="currentColor" stroke-opacity="0.4" stroke-width="1.3"/>
+    <line x1="100" y1="380" x2="620" y2="380" stroke="currentColor" stroke-opacity="0.4" stroke-width="1.3"/>
+
+    <!-- Axis labels -->
+    <text x="60" y="220" class="il-sub" text-anchor="middle" transform="rotate(-90 60 220)" style="text-transform: uppercase; letter-spacing: 0.1em;">Risk →</text>
+    <text x="360" y="420" class="il-sub" text-anchor="middle" style="text-transform: uppercase; letter-spacing: 0.1em;">Horizon →</text>
+
+    <!-- Tick labels -->
+    <text x="92" y="385" class="il-sub" text-anchor="end" style="font-size: 9.5px;">low</text>
+    <text x="92" y="68" class="il-sub" text-anchor="end" style="font-size: 9.5px;">high</text>
+    <text x="100" y="400" class="il-sub" text-anchor="middle" style="font-size: 9.5px;">short</text>
+    <text x="620" y="400" class="il-sub" text-anchor="middle" style="font-size: 9.5px;">long</text>
+
+    <!-- Quadrant separators -->
+    <line x1="360" y1="60" x2="360" y2="380" stroke="currentColor" stroke-opacity="0.18" stroke-dasharray="3 4"/>
+    <line x1="100" y1="220" x2="620" y2="220" stroke="currentColor" stroke-opacity="0.18" stroke-dasharray="3 4"/>
+
+    <!-- Q1: low risk + short horizon (top-left → bottom-left) — Cash -->
+    <g transform="translate(230 300)">
+      <rect x="-90" y="-36" width="180" height="72" rx="6" class="il-node-ok"/>
+      <text y="-8" class="il-label il-label-ok">Cash · short bills</text>
+      <text y="12" class="il-sub" style="fill: var(--ok-text);">preserve</text>
+      <text y="26" class="il-sub" style="fill: var(--ok-text); font-size: 9.5px;">low return · low loss</text>
+    </g>
+
+    <!-- Q2: low risk + long horizon -->
+    <g transform="translate(490 300)">
+      <rect x="-90" y="-36" width="180" height="72" rx="6" class="il-node-warn"/>
+      <text y="-8" class="il-label il-label-warn">Cash · 30y</text>
+      <text y="12" class="il-sub" style="fill: var(--warn-text);">inflation drag</text>
+      <text y="26" class="il-sub" style="fill: var(--warn-text); font-size: 9.5px;">erodes silently</text>
+    </g>
+
+    <!-- Q3: high risk + short horizon -->
+    <g transform="translate(230 140)">
+      <rect x="-90" y="-36" width="180" height="72" rx="6" class="il-node-crit"/>
+      <text y="-8" class="il-label il-label-crit">Equities · 2y</text>
+      <text y="12" class="il-sub" style="fill: var(--crit-text);">gambling</text>
+      <text y="26" class="il-sub" style="fill: var(--crit-text); font-size: 9.5px;">drawdowns will happen</text>
+    </g>
+
+    <!-- Q4: high risk + long horizon -->
+    <g transform="translate(490 140)">
+      <rect x="-90" y="-36" width="180" height="72" rx="6" class="il-node-acc"/>
+      <text y="-8" class="il-label il-label-acc">Equities · 30y</text>
+      <text y="12" class="il-sub" style="fill: var(--accent-text);">compounding</text>
+      <text y="26" class="il-sub" style="fill: var(--accent-text); font-size: 9.5px;">where wealth is built</text>
+    </g>
+  </svg>
+
+  <p class="muted" style="font-size: 13.5px;">The diagonal carries the argument: the same instrument is "gambling" or "compounding" depending entirely on the horizon you pair it with. Quadrants in semantic colors — green is safe, red is dangerous, amber hides a slow loss, cobalt is the target.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════
+     RULES
+     ═════════════════════════════════════════════════════════════ -->
+<section class="sect" id="rules">
+  <div class="sect-head">
+    <div class="left">
+      <span class="kicker"><span class="num">24</span> Non-negotiables</span>
+      <h2>Hard rules</h2>
+    </div>
+    <div class="right">do not violate</div>
+  </div>
+
+  <p>The system depends on these. Bend any of them and the modern aesthetic regresses to a generic doc theme. Every rule has been a real mistake at some point in the design's life.</p>
+
+  <table class="rules">
+    <thead>
+      <tr><th>#</th><th>Rule</th><th>Reason</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="num">01</td><td class="what">One accent only.</td><td>Cobalt does all the structural work. Adding a second "primary" color (orange, magenta) collapses the hierarchy into category-soup.</td></tr>
+      <tr><td class="num">02</td><td class="what">Mono is structural.</td><td>Mono labels, IDs, timestamps, tags, edge labels, and kickers form the architectural skeleton. Replacing them with sans = generic docs theme.</td></tr>
+      <tr><td class="num">03</td><td class="what">No serifs.</td><td>The scholarly variant of this system uses serifs. This one doesn't. Mixing the two regresses to nothing.</td></tr>
+      <tr><td class="num">04</td><td class="what">Orthogonal edges in diagrams.</td><td>Concept maps and trees use right-angle paths, not curves. Curves are reserved for feedback edges — they have to mean something.</td></tr>
+      <tr><td class="num">05</td><td class="what">Plates match page tone.</td><td>Unlike the threat-report's forced-dark hero, plates here are continuous with the page background. Single-theme builds still honor the principle — no tonal interruptions inside the prose.</td></tr>
+      <tr><td class="num">06</td><td class="what">Semantic colors carry meaning.</td><td>ok, warn, crit, insight — never decorative. If a callout could be any color, it shouldn't be colored at all.</td></tr>
+      <tr><td class="num">07</td><td class="what">Source IDs are real.</td><td>Every <code>src_*</code> identifier in the document refers to an actual entry in the bibliography. Inventing fake IDs to look authoritative corrupts the whole pattern.</td></tr>
+      <tr><td class="num">08</td><td class="what">Mono uses tabular figures.</td><td>JetBrains Mono's tabular numerals align in tables and code; treating mono as just-another-font breaks alignment in comparison tables.</td></tr>
+      <tr><td class="num">09</td><td class="what">Max one TL;DR per document.</td><td>Multiple capsules dilute the gist. If you need two, you have two documents.</td></tr>
+      <tr><td class="num">10</td><td class="what">Terminal stays dark.</td><td>Light-mode terminals don't exist in real life. The <code>.term</code> component is always dark regardless of page theme.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<footer class="foot">
+  <div class="build">design system <span class="v">ds-2.0</span> · modern · dark</div>
+  <div class="sig">Knowledge Guide · 2026</div>
+</footer>
+
+</div>
+</body>
+</html>

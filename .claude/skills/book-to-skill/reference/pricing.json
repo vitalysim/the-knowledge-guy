@@ -1,0 +1,11 @@
+{
+  "as_of": "2026-05-17",
+  "source_url": "https://docs.claude.com/en/docs/about-claude/pricing",
+  "currency_per_mtok": "USD",
+  "note": "Read this file when presenting the Step-4 cost estimate. If as_of is more than 90 days old, prepend a 'prices may be stale' warning to the estimate.",
+  "models": {
+    "claude-haiku-4-5":  {"label": "Claude Haiku 4.5",  "input": 1, "output": 5},
+    "claude-sonnet-4-6": {"label": "Claude Sonnet 4.6", "input": 3, "output": 15},
+    "claude-opus-4-7":   {"label": "Claude Opus 4.7",   "input": 5, "output": 25}
+  }
+}

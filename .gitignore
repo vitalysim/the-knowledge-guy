@@ -1,0 +1,44 @@
+# the-knowledge-guy
+
+# Generated outputs — local to each install, not source
+artifacts/
+previews/
+
+# Generated book-skills — created by `/book-to-skill` per user, not shipped.
+# This ships JUST the two source skills (book-to-skill + the-knowledge-guy);
+# every book-derived skill the user ingests is local-only and auto-created
+# on the next `/book-to-skill /path/to/book.pdf` invocation.
+.claude/skills/*/
+!.claude/skills/book-to-skill/
+!.claude/skills/the-knowledge-guy/
+
+# Per-skill Python venv provisioned by book-to-skill/scripts/setup.sh
+.venv/
+**/.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# macOS
+.DS_Store
+._*
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local environment
+.env
+.envrc
+
+# Claude Code local-only settings (project-scoped overrides shipped via
+# `.claude/settings.json` if any; user-scoped local prefs are ignored).
+.claude/settings.local.json

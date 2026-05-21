@@ -1,0 +1,8 @@
+# book-to-skill — extraction dependencies
+# Versions current as of May 2026; minimums chosen for the APIs the
+# extractor relies on (get_image_info(xrefs=True), find_tables(), get_toc()).
+
+PyMuPDF>=1.24.0        # primary backend: text, images, tables, outline, rendering
+ebooklib>=0.18         # EPUB parsing
+beautifulsoup4>=4.12.0 # EPUB HTML handling
+pypdf>=4.0.0           # text-only PDF fallback (pypdf, not the deprecated PyPDF2)
