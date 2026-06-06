@@ -22,15 +22,30 @@ not "the chapter explains X".
 
 ## Target size
 
-800–1,400 tokens per file. Dense, not verbose. A tight 1,000-token extraction
-beats a 6,000-token excerpt. If a chapter is genuinely huge, keep the file
-tight and push secondary detail into `Key Takeaways` as terse lines.
+**Standard mode (default).** 800–1,400 tokens per file. Dense, not verbose. A
+tight 1,000-token extraction beats a 6,000-token excerpt. If a chapter is
+genuinely huge, keep the file tight and push secondary detail into
+`Key Takeaways` as terse lines.
+
+**Complete mode (`WITH_COVERAGE=complete`).** No token cap — the file is as long
+as it needs to be. The toolkit MUST contain **every load-bearing element present
+in the chapter**: every named framework, every code example, every figure /
+diagram, every reference table, every anti-pattern, every exercise, and every key
+definition. Condense prose, narration, and filler (do **not** re-render them
+verbatim), but never *drop* a load-bearing element to save space. When unsure
+whether something is load-bearing, include it. A Step-7.5 coverage audit verifies
+this and re-runs the chapter if anything was skipped, so completeness here saves a
+re-run later.
 
 ## Template
 
-Use this structure. Keep sections that have real content; drop sections the
-genre profile marks as irrelevant (e.g. omit `Code Examples` for productivity
-books). Never invent content to fill a section.
+Use this structure. Keep every section that has real content. In **standard
+mode** you may also omit a section the genre profile de-emphasises (e.g. omit
+`Code Examples` for productivity books). In **complete mode** a section is
+omitted **only when that element is genuinely absent from the chapter** — a genre
+profile's de-emphasis is never grounds to drop a section that is actually present
+(a productivity chapter that *does* contain a worked decision table keeps its
+`Reference Tables`). Never invent content to fill a section.
 
 ```markdown
 # Chapter <N>: <Full Title>
@@ -113,6 +128,11 @@ their captions are preserved as text in the chapter body.*"
 ## Quality bar
 
 - Preserve the author's exact terminology and naming.
-- Density over completeness — extract signal, drop filler.
+- **Standard mode:** Density over completeness — extract signal, drop filler.
+- **Complete mode:** Completeness of load-bearing elements over brevity — every
+  framework, code block, figure, table, anti-pattern, exercise, and definition
+  present in the chapter appears in the toolkit. Filler/narration is still
+  condensed, never re-rendered verbatim. "Drop filler" never means "drop an
+  element."
 - Never copy raw book text; always synthesise.
 - Every framework needs a *when to use*, or it is not actionable.

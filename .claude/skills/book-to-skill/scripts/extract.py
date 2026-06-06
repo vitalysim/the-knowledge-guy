@@ -843,6 +843,10 @@ def main() -> int:
     ap.add_argument("--min-image-dim", type=int, default=None,
                     help="minimum image short-edge px; default depends on --genre")
     ap.add_argument("--max-images", type=int, default=400)
+    ap.add_argument("--coverage", choices=["standard", "complete"], default="standard",
+                    help="complete: floor the image threshold to 110px so real "
+                         "figures aren't dropped before the LLM sees them "
+                         "(used by /book-to-skill complete-coverage mode)")
     ap.add_argument("--resume", action="store_true",
                     help="skip extraction if outputs already match the source")
     args = ap.parse_args()
@@ -884,9 +888,16 @@ def main() -> int:
 
     min_dim = (args.min_image_dim if args.min_image_dim is not None
                else GENRE_MIN_IMAGE_DIM.get(args.genre, DEFAULT_MIN_IMAGE_DIM))
+    # Complete-coverage mode must not drop a real figure before the LLM ever
+    # sees it. Floor the genre threshold to the technical baseline (110px) — an
+    # explicit --min-image-dim still wins. (seen_hashes + max_images still bound
+    # cost; the Step-7.5 coverage audit classifies any survivor as load-bearing
+    # vs decorative.)
+    if args.coverage == "complete" and args.min_image_dim is None:
+        min_dim = min(min_dim, 110)
 
     print(f"Extracting {ext.upper()[1:]}: {args.book}")
-    print(f"  mode={args.mode} genre={args.genre} min_image_dim={min_dim}px")
+    print(f"  mode={args.mode} genre={args.genre} coverage={args.coverage} min_image_dim={min_dim}px")
 
     if ext == ".pdf":
         result = extract_pdf_fitz(args.book, work, args.mode, min_dim, args.max_images)

@@ -39,6 +39,48 @@ SNIPPET_HITS_ALLOWED = 15
 SNIPPET_STEP = 120
 EXPECTED_HEADINGS = ("Frameworks", "Key Takeaways")
 
+# --coverage mode: the cheap, deterministic half of the Step-7.5 coverage check.
+# The RAW chapter text is plain extracted PDF/EPUB text — it has no markdown
+# code fences or `|` table rows — so the only element we can count reliably in
+# the raw is the FIGURE: extract.py injects `[[IMAGE: …]]` / `[[PAGE_SCAN: …]]`
+# placeholders into the raw at the exact spots images appear. Every such
+# placeholder must be accounted for in the toolkit (a Figures bullet, or a
+# one-line "decorative" / "could not be read" note). Frameworks, code, tables,
+# anti-patterns, exercises, and definitions are NOT mechanically countable in
+# raw text — those are the LLM coverage-audit subagent's job (Step 7.5).
+IMG_PLACEHOLDER_RE = re.compile(r"\[\[(?:IMAGE|PAGE_SCAN):", re.I)
+FIG_BULLET_RE = re.compile(r"^\s*[-*]\s", re.M)
+
+
+def _figures_section(md: str) -> str:
+    """Text under a '## Figures' heading, up to the next '## '. Empty if none."""
+    m = re.search(r"^#{2,}\s*Figures\b", md, re.M | re.I)
+    if not m:
+        return ""
+    rest = md[m.end():]
+    nxt = re.search(r"^#{2,}\s", rest, re.M)
+    return rest[: nxt.start()] if nxt else rest
+
+
+def coverage_deficits(toolkit_md: str, raw_text: str) -> list[str]:
+    """Cheap raw-vs-toolkit coverage deficits (figures only — see note above).
+
+    A deficit means the toolkit accounts for fewer figures than the raw has
+    `[[IMAGE]]`/`[[PAGE_SCAN]]` placeholders, so a figure was likely dropped.
+    """
+    out: list[str] = []
+    raw_imgs = len(IMG_PLACEHOLDER_RE.findall(raw_text))
+    if raw_imgs:
+        fig_sec = _figures_section(toolkit_md)
+        low = toolkit_md.lower()
+        accounted = (len(FIG_BULLET_RE.findall(fig_sec))
+                     + low.count("could not be read")
+                     + low.count("decorative"))
+        if accounted < raw_imgs:
+            out.append(f"figures: raw has {raw_imgs} image placeholder(s), "
+                       f"toolkit accounts for {accounted}")
+    return out
+
 
 def _load_manifest_index(skill_dir: Path) -> dict[str, str] | None:
     """Map `chapters/<stem>.md` → `book_number` so raw lookups can find
@@ -107,7 +149,8 @@ def verbatim_hits(chapter_md: str, raw_text: str) -> int:
 
 
 def lint_chapter(md_path: Path, skill_dir: Path,
-                 by_stem: dict[str, str] | None) -> list[str]:
+                 by_stem: dict[str, str] | None,
+                 coverage: bool = False) -> list[str]:
     warnings: list[str] = []
     text = md_path.read_text(encoding="utf-8", errors="replace")
 
@@ -117,7 +160,9 @@ def lint_chapter(md_path: Path, skill_dir: Path,
     words = len(text.split())
     if words < WORD_MIN:
         warnings.append(f"only {words} words (target {WORD_MIN}-{WORD_MAX})")
-    elif words > WORD_MAX:
+    elif words > WORD_MAX and not coverage:
+        # In complete-coverage mode toolkits routinely exceed the cap by design,
+        # so this warning would be pure noise — demote it.
         warnings.append(f"{words} words exceeds {WORD_MAX} target")
 
     missing = [h for h in EXPECTED_HEADINGS if h.lower() not in text.lower()]
@@ -139,6 +184,9 @@ def lint_chapter(md_path: Path, skill_dir: Path,
                 f"{hits} verbatim {SNIPPET_LEN}-char windows match raw source "
                 f"(threshold {SNIPPET_HITS_ALLOWED}) — possible copy-paste"
             )
+        if coverage:
+            for d in coverage_deficits(text, raw_text):
+                warnings.append("COVERAGE " + d)
     return warnings
 
 
@@ -147,6 +195,12 @@ def main() -> int:
     ap.add_argument("skill_dir", help="path to the generated skill directory")
     ap.add_argument("--strict", action="store_true",
                     help="exit non-zero if any warnings are emitted")
+    ap.add_argument("--coverage", action="store_true",
+                    help="complete-mode: add raw-vs-toolkit figure-coverage "
+                         "deficits and demote the >WORD_MAX warning")
+    ap.add_argument("--json", action="store_true",
+                    help="with --coverage: emit {book_number: [deficits]} as JSON "
+                         "(for the Step-7.5 gap-fill loop)")
     args = ap.parse_args()
 
     skill_dir = Path(args.skill_dir)
@@ -166,16 +220,24 @@ def main() -> int:
     by_stem = _load_manifest_index(skill_dir)
 
     total_warnings = 0
+    cov_by_book: dict[str, list[str]] = {}
     for md in files:
-        ws = lint_chapter(md, skill_dir, by_stem)
-        if ws:
-            total_warnings += len(ws)
+        ws = lint_chapter(md, skill_dir, by_stem, coverage=args.coverage)
+        total_warnings += len(ws)
+        if args.coverage:
+            bn = (by_stem or {}).get(md.stem, md.stem)
+            cov_by_book[bn] = [w[len("COVERAGE "):] for w in ws
+                               if w.startswith("COVERAGE ")]
+        if ws and not args.json:
             print(f"\n{md.name}")
             for w in ws:
                 print(f"  - {w}")
 
-    print(f"\n{len(files)} chapter file(s) checked, "
-          f"{total_warnings} warning(s) total.")
+    if args.json:
+        print(json.dumps(cov_by_book, indent=2))
+    else:
+        print(f"\n{len(files)} chapter file(s) checked, "
+              f"{total_warnings} warning(s) total.")
     return 1 if (args.strict and total_warnings) else 0
 
 

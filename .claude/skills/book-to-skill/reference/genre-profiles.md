@@ -19,6 +19,16 @@ Each profile defines five things:
 If unsure between two profiles, jump to the **Selector heuristics** at
 the bottom of this file before committing.
 
+> **Complete-coverage mode (`WITH_COVERAGE=complete`).** Below, "Map emphasis"
+> sets *ordering and weight only*. The "Skip …" / "usually skippable" /
+> "Images usually decorative" lines are then **emphasis hints, not drops**: a
+> section is omitted only when that element is genuinely **absent** from the
+> chapter. If a productivity chapter *does* contain code or a decision table, it
+> is extracted; if a narrative chapter has a figure that states a framework or
+> carries data, it is kept. Emphasis still governs what *leads* the file; it
+> never authorises dropping a present element. (In **standard mode** these lines
+> keep their original "skip" meaning.)
+
 ---
 
 ## technical
@@ -267,8 +277,9 @@ Individual-focused. (For org-focused, use `business`.)
   produces near-duplicate fragments of the same framework. Chunk so each unit
   is one framework even if it spans chapters. Here the reduce step does the
   real work; the map step is lightweight.
-- **Map emphasis**: `Frameworks`, `Mental Models`, `Key Takeaways`. Skip
-  empty `Code Examples` / `Reference Tables` sections entirely.
+- **Map emphasis**: `Frameworks`, `Mental Models`, `Key Takeaways`.
+  `Code Examples` / `Reference Tables` are usually absent here — omit only when
+  truly absent (complete mode keeps any that do appear).
 - **Reduce emphasis**: a single clean statement of the core framework and
   how the sub-ideas hang off it. Strip the motivational filler.
 - **Images**: usually decorative — the extractor's high `min-image-dim`
@@ -291,7 +302,8 @@ Memoirs and biographies — single-life arcs organised chronologically.
 - **Map emphasis**: `Core Idea` (the period's stakes), `Mental Models` (how
   the subject made the decisions of that period), `Key Takeaways`
   (transferable lessons), `Connects To` (people / events / books that
-  shaped them). Skip `Code Examples`, `Reference Tables`.
+  shaped them). `Code Examples` / `Reference Tables` are rarely present —
+  omit only when absent.
 - **Reduce emphasis**: a timeline + decision catalogue — eras of the
   subject's life on one axis, the load-bearing decisions on the other, with
   the lessons distilled from each.
@@ -314,7 +326,8 @@ journalism, intellectual histories that aren't about an era).
   `Connects To`. Capture the lesson, not the anecdote.
 - **Reduce emphasis**: the book's central thesis and the chain of arguments
   supporting it.
-- **Images**: usually skippable.
+- **Images**: usually decorative — keep any figure that states a framework or
+  carries data; one-line the rest.
 - **Don't pick this if…** the chronology and dates are *load-bearing*
   (→ `history`), the unit is *one person's life* (→ `biography`), or the
   argument is *one core idea elaborated with motivational prose*

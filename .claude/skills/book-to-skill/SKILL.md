@@ -73,6 +73,7 @@ crystallised frameworks, plus a concept map of how those frameworks connect.
 Stage 0   EXTRACT   extract.py → text + images + per-chapter slices + offsets
 Pass 0    SPINE     fast read of ToC + intros → the book's thesis & framework list
 Stage 1   MAP       each chapter → one chapter file   (parallel subagents)
+Step 7.5  AUDIT     each chapter → coverage verdict; re-run any gaps  (complete mode)
 Stage 2   REDUCE    all chapter files → concept map + topic index → SKILL.md
 Stage 2.5 NUTSHELL  each chapter file → one micro-summary block → nutshell.md
 Stage 3   PRACTICE  each chapter → one practice set (quizzes/labs/tasks)  (opt-in)
@@ -180,8 +181,14 @@ find /tmp -maxdepth 1 -name 'book_skill_work*' -type d -mtime +1 \
 ```bash
 uv run --python "${BTS_DIR}/.venv/bin/python" \
   "${BTS_DIR}/scripts/extract.py" "$0" \
-  --mode <technical|text> --genre <GENRE> --work-dir /tmp/book_skill_work
+  --mode <technical|text> --genre <GENRE> --coverage <standard|complete> \
+  --work-dir /tmp/book_skill_work
 ```
+
+Pass `--coverage complete` when the user chose complete-coverage mode (Step 4,
+`WITH_COVERAGE=complete`); otherwise `--coverage standard` (the default). In
+complete mode the extractor floors the image threshold to 110px so real figures
+aren't dropped before the LLM ever sees them.
 
 (Equivalent: `"${BTS_DIR}/.venv/bin/python" "${BTS_DIR}/scripts/extract.py"
 …` — the venv created by `setup.sh` is the single source of truth for the
@@ -216,28 +223,44 @@ Read `metadata.json`. Surface both warnings to the user before continuing:
 - `scan_cost_warning: true` (and not fully scanned) → some pages are
   image-only; vision-OCR cost will be elevated.
 
-### Granularity check — automated, with mechanical re-split path
+### Granularity check — automatic re-split (no manual opt-in)
 
-If `metadata.json["granularity_warning"]` is non-null, the auto-detected
-chapters are likely Parts (not real chapters). Don't guess — run the
-heading detector:
+The pipeline never ships a few merged mega-chapters or a single "Full Text"
+blob. Always run the heading detector and capture its candidate count:
 
 ```bash
 "${BTS_DIR}/.venv/bin/python" "${BTS_DIR}/scripts/detect_chapters.py" \
   /tmp/book_skill_work/full_text.txt --table
 ```
 
-Diff its candidate count against `metadata.json["chapter_count"]`. If the
-detector finds notably more (e.g. extractor says 7, detector says 14+),
-present the user the numbers and proceed to re-split:
+Let `A = metadata.json["chapter_count"]` and `B = detector candidate count`.
+**Re-split automatically** (don't wait for the user — just surface the
+before/after counts) when ANY of these holds:
+
+- `metadata.json["granularity_warning"]` is non-null **and** `B ≥ max(5, A+2)`,
+- `A == 1` **or** the sole chapter title is `"Full Text"`,
+- `WITH_COVERAGE=complete` **and** `B ≥ A+2`.
+
+Say e.g. *"Granularity: extractor found A chapters; detector found B —
+auto-re-splitting into the finer set."* Otherwise keep `raw_chapters/` (and say
+so). To re-split:
 
 1. For each candidate `i` with `char_start=S_i` (and next start `S_{i+1}`,
    or end-of-file), write `/tmp/book_skill_work/chapters_split/chNN.txt`
    containing `full_text[S_i:S_{i+1}]`.
 2. Overwrite `metadata.json["chapters"]` with the new list of
-   `{index, title, slug, char_start, char_end, est_tokens,
-   raw_text_path}` entries pointing at `chapters_split/`.
-3. Set `metadata.json["chapters_source"] = "chapters_split"`.
+   `{index, title, slug, char_start, char_end, est_tokens, book_number,
+   raw_text_path}` entries pointing at `chapters_split/` (run the same
+   `assign_book_numbers` labelling).
+3. Set `metadata.json["chapters_source"] = "chapters_split"` and refresh
+   `chapter_count` / `granularity_warning` (now null).
+
+**Worst case — the detector also returns < 2 candidates** (no outline, no
+headings at all, so the extractor produced a single `"Full Text"` chapter):
+do not proceed merged. Fixed-size tile instead — split `full_text.txt` into
+`ceil(len/40000)` equal slices (~10K tokens each), titled `"Section 1..N"`,
+written to `chapters_split/` exactly as above. (The char ranges still tile the
+whole document with no gaps — `finalize_chapter_ranges`' contract.)
 
 From this point onward, Stage 1 reads `chapters_split/` instead of
 `raw_chapters/`. Step 6 moves both directories into the skill's `raw/`
@@ -273,13 +296,33 @@ From `metadata.json`, present an estimate **before generating anything**:
    be rendered as an interactive `/the-knowledge-guy course`. Best for technical
    / textbook / vuln-hunting books. Adds ~1 subagent per eligible chapter
    (≈ +<chapter_count × 1,400> output tokens). Say "with practice" to include it.
+
+🔎 Optional — COMPLETE coverage (verified): by default I extract dense, capped
+   toolkits (~800–1,400 tokens/chapter; signal over completeness). In COMPLETE
+   mode I instead capture EVERY load-bearing element in every chapter (each
+   framework, code example, figure, table, anti-pattern, exercise, definition),
+   with no token cap, then run a per-chapter COVERAGE AUDIT and automatically
+   re-run any chapter with gaps until every chapter passes. Materially more
+   expensive — roughly 2.5–4× standard:
+     Toolkits ≈ <chapter_count × 3,000> output (no cap)
+     Audit    ≈ <chapter_count × 700> output × ~1.6 rounds (reads RAW + toolkit)
+     Gap-fill ≈ re-runs the thinnest ~<round(chapter_count × 0.6)> chapters once
+   Say "complete coverage" for verified-complete extraction; otherwise I use
+   standard mode.
 ```
 
 Wait for confirmation. If the user says "analyze only", switch to Mode 2. If
 the user opts in with "with practice" (or the genre is technical / textbook /
 vuln-hunting and they accept the suggestion), set `WITH_PRACTICE=yes` and run
-**Step 8.6** after the nutshell. Otherwise skip Stage 3 — it is purely additive
-and can be run later by re-invoking with `--regenerate` once practice support
+**Step 8.6** after the nutshell. If the user says "complete coverage" (phrases:
+"complete coverage", "cover everything", "don't skip anything"), set
+`WITH_COVERAGE=complete` — this passes `--coverage complete` to extract.py
+(Step 3), makes the auto-re-split mandatory, injects the complete-mode mandate in
+Step 7, and runs the **Step 7.5** audit + gap-fill loop with the Step-10 coverage
+gate. `WITH_COVERAGE` is independent of `WITH_PRACTICE` (both can be on). Default
+is `standard` — today's cheap path, unchanged. Otherwise skip Stage 3 — it is
+purely additive and can be run later by re-invoking with `--regenerate` once
+practice support
 is wanted.
 
 ## Step 5 — Pass 0: build the spine
@@ -461,9 +504,77 @@ Extract structure, not summary. Preserve exact framework names. 800–1,400
 tokens. Report the chapter title and key frameworks when done.
 ```
 
+**Complete-coverage mode (`WITH_COVERAGE=complete`).** Replace that final
+paragraph of the subagent prompt with the complete-mode mandate:
+
+```
+Extract structure, not summary. Preserve exact framework names. COMPLETE-COVERAGE
+MODE: no token cap — produce a toolkit containing EVERY load-bearing element
+present in this chapter (every named framework, code example, figure, reference
+table, anti-pattern, exercise, key definition). Condense prose/narration; never
+drop a load-bearing element. Omit a template section only if that element is
+genuinely absent from THIS chapter — the genre profile's de-emphasis is NOT a
+reason to drop a present element. For every fenced code block, [[IMAGE]] /
+[[PAGE_SCAN]] placeholder, and table in the raw text, ensure a corresponding
+entry exists in the toolkit (or a one-line "decorative" / "could not be read"
+note). Report the chapter title, key frameworks, and a one-line element tally
+(frameworks/code/figures/tables/anti-patterns/exercises/definitions) when done.
+```
+
+(A Step-7.5 audit verifies this and re-runs any chapter that skipped something,
+so completeness here avoids a re-run.)
+
 After each batch, append completed chapter numbers to
 `${SKILL_DIR}/raw/progress.json`. If a subagent fails, retry that one
 chapter — do not restart the run.
+
+## Step 7.5 — COVERAGE AUDIT + gap-fill (complete mode only)
+
+**Run this only if `WITH_COVERAGE=complete`** (Step 4). Skip it entirely in
+standard mode (zero cost there). It *proves* every chapter toolkit captured every
+load-bearing element in its raw chapter, and re-runs any chapter that didn't —
+ingest will not reach "done" with a known gap. Read the frozen contract first:
+`${BTS_DIR}/reference/coverage-audit-template.md` (schema, the
+load-bearing/decorative/needs-manual-review rules, `THRESHOLD=0.95`,
+`N_ROUNDS=3`). Like Stage 1, this is a parallel per-chapter fan-out.
+
+`mkdir -p "${SKILL_DIR}/raw/coverage"`. Eligible chapters = the same set Stage 1
+extracted (skip `fm`/`bm` and `word_count < 300`).
+
+**The loop** (`THRESHOLD = 0.95`, `N_ROUNDS = 3`):
+
+```
+for round in 1..3:
+  1. MECHANICAL pre-check (cheap, all chapters):
+        "${BTS_DIR}/.venv/bin/python" "${BTS_DIR}/scripts/lint_chapters.py" \
+          "${SKILL_DIR}" --coverage --json   →  {book_number: [figure deficits]}
+  2. AUDIT (LLM, parallel, batched 5–8) every chapter NOT already passing on disk
+     (a chapter is passing iff raw/coverage/<bn>.json exists, parses, and
+     verdict=="complete"). Each audit subagent uses the prompt in
+     coverage-audit-template.md, reads the raw slice + the toolkit, and writes its
+     JSON verdict to ${SKILL_DIR}/raw/coverage/<book_number>.json. Spawn them with
+     a recognizable label (coverage-audit-<bn>) so measure_ingest.sh attributes them.
+  3. failing = chapters where audit.verdict=="gaps" OR audit.coverage < 0.95
+               OR audit.missing is nonempty OR the mechanical pre-check found a deficit.
+  4. if failing is empty: break — every chapter is covered.
+  5. if round == 3: stop looping; record residuals (below).
+  6. GAP-FILL: re-run the Stage-1 subagent (complete-mode mandate) for each failing
+     chapter, appending the gap-fill addendum from coverage-audit-template.md —
+     "keep everything already present and ADD: <missing[].name + raw_evidence>,
+      <mechanical deficits>". Overwrite chapters/<bn>-<slug>.md. DELETE that
+     chapter's raw/coverage/<bn>.json so it is re-audited next round. Label these
+     gapfill-<bn>.
+```
+
+**Residuals.** After the loop, any chapter that never reached `verdict=="complete"`
+is written to `${SKILL_DIR}/raw/coverage/RESIDUALS.json`
+(`{book_number: {coverage, missing, needs_manual_review}}`) and **surfaced loudly**
+— it is carried to the Step-10 gate. `needs_manual_review` figures (genuinely
+unreadable) are reported for inspection but are **not** gaps.
+
+**Resume** is filesystem-driven and idempotent: a chapter with a passing
+`raw/coverage/<bn>.json` is skipped on re-run; gap-fill deletes the JSON so only
+re-extracted chapters are re-audited. `progress.json` stays a log only.
 
 ## Step 8 — Stage 2: REDUCE (concept map)
 
@@ -725,6 +836,51 @@ Any hard ERROR means a broken practice file shipped — re-run that chapter's
 Stage 3 subagent before declaring done. (No practice/ dir is fine — it just
 means Stage 3 was skipped.)
 
+If complete coverage ran (`WITH_COVERAGE=complete`), enforce the **coverage
+gate** — ingest must not claim success with a known gap:
+
+```bash
+python3 - "${SKILL_DIR}" <<'PYEOF'
+import json, sys, pathlib
+sd = pathlib.Path(sys.argv[1]); cov = sd / "raw" / "coverage"
+THRESHOLD = 0.95
+offenders, review = [], []
+for jf in sorted(cov.glob("*.json")):
+    if jf.name == "RESIDUALS.json": continue
+    d = json.loads(jf.read_text())
+    if d.get("verdict") != "complete" or d.get("coverage", 0) < THRESHOLD:
+        offenders.append((d.get("book_number"), d.get("coverage"),
+                          [m.get("name") for m in d.get("missing", [])]))
+    for n in d.get("needs_manual_review", []):
+        review.append((d.get("book_number"), n.get("name"), n.get("reason")))
+res = cov / "RESIDUALS.json"
+if res.is_file():
+    for bn, info in json.loads(res.read_text()).items():
+        offenders.append((bn, info.get("coverage"),
+                          [m.get("name") for m in info.get("missing", [])]))
+print("📊 Coverage report:")
+for jf in sorted(cov.glob("*.json")):
+    if jf.name == "RESIDUALS.json": continue
+    d = json.loads(jf.read_text())
+    flag = "✓" if (d.get("verdict") == "complete" and d.get("coverage",0) >= THRESHOLD) else "❌"
+    print(f"   {d.get('book_number')}  {int(d.get('coverage',0)*100)}%  {flag}")
+if review:
+    print("🔍 Figures needing manual review (surfaced, NOT gate failures):")
+    for bn, name, reason in review: print(f"   {bn}: {name} — {reason}")
+if offenders:
+    print("❌ COVERAGE GATE FAILED — chapters with known gaps after gap-fill:")
+    for bn, c, miss in offenders: print(f"   {bn}: coverage={c} missing={miss}")
+    sys.exit(1)
+print("✅ Coverage gate: every chapter ≥ 0.95 with no missing load-bearing elements.")
+PYEOF
+```
+
+A non-zero exit means the final report must **not** claim full success — list the
+offending `book_number`s and their residual `missing[]` (just as "extraction
+failed" stubs are surfaced). `needs_manual_review` figures are reported for the
+user to inspect; they are not gate failures. The `schema_version` assertion above
+is **unchanged** — coverage is orthogonal to chapter numbering.
+
 Then remove the staging directory only (the raw lives inside the skill now):
 
 ```bash
@@ -779,6 +935,11 @@ the same arguments is always safe:
 - **Stage 2.5 (nutshell)**: if `${SKILL_DIR}/nutshell.md` already exists
   and is non-empty, skip it on resume. To regenerate, delete the file
   and re-run.
+- **Step 7.5 (coverage audit, complete mode)**: a chapter whose
+  `${SKILL_DIR}/raw/coverage/<book_number>.json` exists, parses, and has
+  `verdict == "complete"` is done — skip its audit. Gap-fill deletes that JSON,
+  so re-running re-audits only the chapters that were re-extracted. The whole
+  loop is filesystem-driven; `progress.json` is not consulted.
 
 If a run dies at chapter 28 of 40, re-running picks up at chapter 29.
 
