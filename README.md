@@ -1,4 +1,4 @@
-# the-knowledge-guy
+# The Knowledge Guy
 
 > Turn any PDF or EPUB into a structured Claude Code skill —
 > then ask your whole bookshelf a single question.
