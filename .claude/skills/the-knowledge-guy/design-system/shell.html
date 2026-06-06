@@ -1563,6 +1563,326 @@ color-scheme: light dark;
 
 
 /* ════════════════════════════════════════════════════════════════════
+   INTERACTIVE — practice / labs (added by the-knowledge-guy `course` mode)
+   Powers the `course` chapter sites. The JS engine at the bottom of the
+   shell hydrates a #kg-exercises JSON island into these components.
+   Theme-aware via the existing --ok / --warn / --crit / --accent vars.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* — Mastery meter ——————————————————————————————————————— */
+.mastery {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 22px 0 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.mastery .mastery-track {
+  flex: 1;
+  height: 7px;
+  background: var(--surface-3);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.mastery .mastery-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width .3s ease;
+}
+.mastery.complete .mastery-fill { background: var(--ok); }
+.mastery .mastery-label { white-space: nowrap; }
+.mastery .mastery-label .done { color: var(--text); font-weight: 600; }
+.mastery .mastery-label .sent { color: var(--accent-text); }
+
+/* — Exercise card ——————————————————————————————————————— */
+.exercise {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: 18px 22px 20px;
+  margin: 16px 0;
+}
+.exercise .ex-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.exercise .ex-head .kicker { flex: 1; }
+.exercise .ex-prompt {
+  font-size: 15.5px;
+  font-variation-settings: "wght" 500, "wdth" 92;
+  margin: 0 0 14px;
+}
+.exercise .ex-prompt p:first-child { margin-top: 0; }
+.exercise .ex-prompt p:last-child { margin-bottom: 0; }
+.exercise .ex-cite {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 14px;
+}
+.exercise .ex-cite .ref {
+  color: var(--accent-text);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--r-xs);
+  padding: 1px 6px;
+}
+
+/* Difficulty / status badge */
+.ex-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.ex-badge.intro   { color: var(--text-muted); }
+.ex-badge.core    { color: var(--accent-text); border-color: var(--accent-border); background: var(--accent-bg); }
+.ex-badge.stretch { color: var(--insight-text); border-color: var(--insight-border); background: var(--insight-bg); }
+.ex-badge.pass    { color: var(--ok-text);   border-color: var(--ok-border);   background: var(--ok-bg); }
+.ex-badge.fail    { color: var(--crit-text); border-color: var(--crit-border); background: var(--crit-bg); }
+.ex-badge.sent    { color: var(--accent-text); border-color: var(--accent-border); background: var(--accent-bg); }
+
+/* — Options (mcq / predict-output / fix-the-bug / spot-anti-pattern) —— */
+.options { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 0; }
+.opt {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color .12s, background .12s;
+  font-size: 14px;
+}
+.opt:hover { border-color: var(--border-strong); }
+.opt .key {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  background: var(--surface-2);
+}
+.opt .opt-text code { font-size: 0.85em; }
+.opt .opt-why {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  display: none;
+}
+.opt.chosen { border-color: var(--accent); background: var(--accent-bg); }
+.opt.chosen .key { border-color: var(--accent); color: var(--accent-text); }
+.options.answered .opt { cursor: default; }
+.opt.correct   { border-color: var(--ok-border);   background: var(--ok-bg); }
+.opt.correct .key   { border-color: var(--ok);   color: var(--ok-text);   background: var(--ok-bg); }
+.opt.incorrect { border-color: var(--crit-border); background: var(--crit-bg); }
+.opt.incorrect .key { border-color: var(--crit); color: var(--crit-text); background: var(--crit-bg); }
+.options.answered .opt.correct .opt-why,
+.options.answered .opt.incorrect .opt-why { display: block; }
+
+/* — Fill-in-the-blank ——————————————————————————————————— */
+.blank-input {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 5px 9px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-xs);
+  background: var(--surface);
+  color: var(--text);
+  min-width: 120px;
+  margin: 0 3px;
+}
+.blank-input.correct   { border-color: var(--ok);   background: var(--ok-bg); }
+.blank-input.incorrect { border-color: var(--crit); background: var(--crit-bg); }
+
+/* — Reorder steps ——————————————————————————————————————— */
+.reorder { display: flex; flex-direction: column; gap: 6px; }
+.reorder .step-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font-size: 14px;
+}
+.reorder .step-row .moves { display: flex; gap: 4px; }
+.reorder .step-row .moves button {
+  appearance: none; cursor: pointer;
+  width: 24px; height: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+.reorder .step-row .moves button:hover { border-color: var(--accent-border); color: var(--accent-text); }
+.reorder.answered .step-row.correct   { border-color: var(--ok-border);   background: var(--ok-bg); }
+.reorder.answered .step-row.incorrect { border-color: var(--crit-border); background: var(--crit-bg); }
+
+/* — Buttons ————————————————————————————————————————————— */
+.ex-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.btn {
+  appearance: none; cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  transition: filter .12s, background .12s, border-color .12s;
+}
+:root[data-theme="dark"] .btn { color: #0b0b0c; }
+.btn:hover { filter: brightness(1.06); }
+.btn:disabled { opacity: 0.5; cursor: default; filter: none; }
+.btn.secondary, .btn.ghost {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+:root[data-theme="dark"] .btn.secondary, :root[data-theme="dark"] .btn.ghost { color: var(--text); }
+.btn.secondary:hover, .btn.ghost:hover { border-color: var(--accent); color: var(--accent-text); filter: none; }
+.btn.ghost { background: transparent; }
+
+/* — Feedback panel ——————————————————————————————————————— */
+.ex-feedback {
+  margin-top: 14px;
+  padding: 11px 15px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text-faint);
+  background: var(--surface-2);
+  font-size: 13.5px;
+}
+.ex-feedback .fb-lbl {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-right: 8px;
+}
+.ex-feedback.ok   { border-left-color: var(--ok);   background: var(--ok-bg); }
+.ex-feedback.ok .fb-lbl   { color: var(--ok-text); }
+.ex-feedback.crit { border-left-color: var(--crit); background: var(--crit-bg); }
+.ex-feedback.crit .fb-lbl { color: var(--crit-text); }
+.ex-feedback.note { border-left-color: var(--accent); background: var(--accent-bg); }
+.ex-feedback.note .fb-lbl { color: var(--accent-text); }
+.ex-feedback p:first-child { margin-top: 0; }
+.ex-feedback p:last-child { margin-bottom: 0; }
+
+/* — Runnable lab ————————————————————————————————————————— */
+.runner { margin-top: 4px; }
+.runner-editor {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  tab-size: 2;
+  padding: 14px 16px;
+  border: 1px solid var(--code-border);
+  border-radius: var(--r-md);
+  background: var(--code-bg);
+  color: var(--text);
+  resize: vertical;
+  min-height: 150px;
+  white-space: pre;
+  overflow-wrap: normal;
+}
+.runner-editor:focus { outline: none; border-color: var(--accent-border); }
+.runner .runtime-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.runner-out {
+  margin-top: 12px;
+  background: var(--term-bg);
+  border-radius: var(--r-md);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--term-text);
+  overflow: hidden;
+}
+.runner-out .out-head {
+  padding: 7px 14px;
+  background: var(--term-surface);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--term-dim);
+}
+.runner-out pre { margin: 0; padding: 12px 16px; white-space: pre-wrap; word-break: break-word; }
+.runner-out .o { color: var(--term-out); }
+.runner-out .err { color: #f87171; }
+.runner-verdict {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+}
+.runner-verdict.pass { border-color: var(--ok-border);   background: var(--ok-bg);   color: var(--ok-text); }
+.runner-verdict.fail { border-color: var(--crit-border); background: var(--crit-bg); color: var(--crit-text); }
+.runner-verdict.warn { border-color: var(--warn-border); background: var(--warn-bg); color: var(--warn-text); }
+.runner-verdict .v-icon { font-weight: 700; }
+
+/* — Open-task attempt box ——————————————————————————————— */
+.attempt-box {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  padding: 12px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text);
+  resize: vertical;
+  min-height: 110px;
+}
+.attempt-box:focus { outline: none; border-color: var(--accent-border); }
+
+/* — Sandboxed lab iframe is never shown ———————————————————— */
+.kg-lab-frame { display: none; }
+
+
+/* ════════════════════════════════════════════════════════════════════
    PER-USE-CASE EXTRA CSS (filled by each artifact)
    ════════════════════════════════════════════════════════════════════ */
 {{EXTRA_CSS}}
@@ -1602,6 +1922,355 @@ color-scheme: light dark;
       });
     });
   })();
+</script>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     LAB ENGINE (added by the-knowledge-guy `course` mode)
+     Hydrates a #kg-exercises JSON island into interactive practice.
+     No-ops on every page that lacks the island, so it ships harmlessly
+     in every artifact. Self-contained; runs from file://. Lab code runs
+     in a sandboxed <iframe> (no same-origin), so it can never read the
+     progress store. Python lazy-loads Pyodide from CDN and degrades to
+     "check with Claude" when offline.
+     ════════════════════════════════════════════════════════════════════ -->
+<script>
+(() => {
+  const island = document.getElementById('kg-exercises');
+  const mount  = document.getElementById('kg-practice');
+  if (!island || !mount) return;
+
+  let data;
+  try { data = JSON.parse(island.textContent); } catch (e) {
+    mount.innerHTML = '<div class="ex-feedback crit"><span class="fb-lbl">Error</span>Could not parse the exercise data for this chapter.</div>';
+    return;
+  }
+  const exercises = Array.isArray(data) ? data : (data && data.exercises) || [];
+  const scope = mount.dataset.scope || (data && data.scope) || 'unknown/unknown';
+  const [skillSlug, bookNumber] = scope.split('/');
+  const PKEY = 'kg-lab-progress-v1';
+  const PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js';
+
+  // — progress store ————————————————————————————————————————
+  const load = () => { try { return JSON.parse(localStorage.getItem(PKEY)) || {}; } catch (e) { return {}; } };
+  const save = (all) => { try { localStorage.setItem(PKEY, JSON.stringify(all)); } catch (e) {} };
+  function setState(id, patch) {
+    const all = load();
+    const s = (all[scope] = all[scope] || {});
+    s[id] = Object.assign({ attempts: 0 }, s[id], patch, { ts: Date.now() });
+    save(all);
+    paintMastery();
+    return s[id];
+  }
+  const getState = (id) => (load()[scope] || {})[id] || null;
+
+  // — tiny inline markdown (escape first, then code/bold/breaks) ——————
+  const esc = (s) => String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const md = (s) => esc(s)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+  const cite = (ex) => {
+    const bn = (ex.tests && ex.tests.book_number) || bookNumber;
+    return `<div class="ex-cite">tests · <span class="ref">${esc(skillSlug)} ${esc(bn)}</span></div>`;
+  };
+  const head = (ex, badgeOverride) => {
+    const st = getState(ex.id);
+    let badge = badgeOverride;
+    if (!badge) {
+      if (st && st.status === 'passed') badge = '<span class="ex-badge pass">cleared</span>';
+      else if (st && st.status === 'failed') badge = '<span class="ex-badge fail">retry</span>';
+      else if (st && st.status === 'sent') badge = '<span class="ex-badge sent">sent to Claude</span>';
+      else badge = `<span class="ex-badge ${esc(ex.difficulty || 'core')}">${esc(ex.difficulty || 'core')}</span>`;
+    }
+    return `<div class="ex-head"><span class="kicker">${esc(ex.type || ex.family)}</span>${badge}</div>`;
+  };
+
+  // — mastery meter ——————————————————————————————————————————
+  const meter = document.querySelector('.mastery[data-scope="' + scope + '"]');
+  function paintMastery() {
+    if (!meter) return;
+    const s = load()[scope] || {};
+    const total = exercises.length;
+    const passed = exercises.filter(e => (s[e.id] || {}).status === 'passed').length;
+    const sent = exercises.filter(e => (s[e.id] || {}).status === 'sent').length;
+    const pct = total ? Math.round((passed / total) * 100) : 0;
+    const fill = meter.querySelector('.mastery-fill');
+    if (fill) fill.style.width = pct + '%';
+    meter.classList.toggle('complete', total > 0 && passed === total);
+    const lbl = meter.querySelector('.mastery-label');
+    if (lbl) lbl.innerHTML = `<span class="done">${passed}</span>/${total} cleared`
+      + (sent ? ` · <span class="sent">${sent} sent to Claude</span>` : '');
+  }
+
+  // — auto: option-based (mcq / predict-output / fix-the-bug / spot-anti-pattern) —
+  function renderOptions(ex, el) {
+    const snip = ex.snippet ? `<div class="code-block"><div class="code-head"><span class="lang">${esc(ex.snippet.language || '')}</span></div><pre><code>${esc(ex.snippet.code)}</code></pre></div>` : '';
+    const opts = (ex.options || []).map(o =>
+      `<div class="opt" data-key="${esc(o.key)}"><span class="key">${esc(o.key).toUpperCase()}</span>`
+      + `<div><div class="opt-text">${md(o.text)}</div><div class="opt-why">${md(o.why || '')}</div></div></div>`).join('');
+    el.innerHTML = head(ex) + `<div class="ex-prompt">${md(ex.prompt)}</div>` + snip
+      + `<div class="options">${opts}</div>`
+      + `<div class="ex-actions"><button class="btn" data-act="check" disabled>Check</button></div>`
+      + `<div class="ex-feedback" hidden></div>` + cite(ex);
+    const optsEl = el.querySelector('.options');
+    const btn = el.querySelector('[data-act="check"]');
+    const fb = el.querySelector('.ex-feedback');
+    let chosen = null;
+    const prior = getState(ex.id);
+    optsEl.querySelectorAll('.opt').forEach(o => o.addEventListener('click', () => {
+      if (optsEl.classList.contains('answered')) return;
+      optsEl.querySelectorAll('.opt').forEach(x => x.classList.remove('chosen'));
+      o.classList.add('chosen'); chosen = o.dataset.key; btn.disabled = false;
+    }));
+    function reveal(correctKey, picked) {
+      optsEl.classList.add('answered');
+      optsEl.querySelectorAll('.opt').forEach(o => {
+        if (o.dataset.key === correctKey) o.classList.add('correct');
+        else if (o.dataset.key === picked) o.classList.add('incorrect');
+      });
+      const ok = picked === correctKey;
+      fb.hidden = false;
+      fb.className = 'ex-feedback ' + (ok ? 'ok' : 'crit');
+      fb.innerHTML = `<span class="fb-lbl">${ok ? 'Correct' : 'Not quite'}</span>${md(ex.explanation || '')}`;
+      btn.remove();
+      const st = setState(ex.id, { status: ok ? 'passed' : 'failed', attempts: (prior ? prior.attempts : 0) + 1 });
+      refreshBadge(el, ex);
+    }
+    btn.addEventListener('click', () => chosen && reveal(ex.answer, chosen));
+  }
+
+  // — auto: fill-in-the-blank ————————————————————————————————
+  function renderFill(ex, el) {
+    let i = 0;
+    const promptHtml = md(ex.prompt).replace(/____+/g, () => {
+      const b = (ex.blanks || [])[i++] || { id: 'b' + i };
+      return `<input class="blank-input" data-blank="${esc(b.id)}" autocomplete="off">`;
+    });
+    el.innerHTML = head(ex) + `<div class="ex-prompt">${promptHtml}</div>`
+      + `<div class="ex-actions"><button class="btn" data-act="check">Check</button></div>`
+      + `<div class="ex-feedback" hidden></div>` + cite(ex);
+    const fb = el.querySelector('.ex-feedback');
+    el.querySelector('[data-act="check"]').addEventListener('click', () => {
+      let allOk = true;
+      el.querySelectorAll('.blank-input').forEach(inp => {
+        const b = (ex.blanks || []).find(x => x.id === inp.dataset.blank) || {};
+        const norm = (v) => String(v).trim().toLowerCase().replace(/\s+/g, '');
+        const ok = (b.accepted || []).some(a => norm(a) === norm(inp.value));
+        inp.classList.toggle('correct', ok); inp.classList.toggle('incorrect', !ok);
+        if (!ok) allOk = false;
+      });
+      fb.hidden = false; fb.className = 'ex-feedback ' + (allOk ? 'ok' : 'crit');
+      fb.innerHTML = `<span class="fb-lbl">${allOk ? 'Correct' : 'Not quite'}</span>${md(ex.explanation || '')}`;
+      setState(ex.id, { status: allOk ? 'passed' : 'failed' }); refreshBadge(el, ex);
+    });
+  }
+
+  // — auto: reorder-steps ————————————————————————————————————
+  function renderReorder(ex, el) {
+    let order = (ex.steps || []).map(s => s.id); // initial (as given — author should pre-shuffle, or we leave)
+    function draw() {
+      const rows = order.map((sid, idx) => {
+        const s = ex.steps.find(x => x.id === sid);
+        return `<div class="step-row" data-sid="${esc(sid)}"><div>${md(s.text)}</div>`
+          + `<div class="moves"><button data-mv="up" ${idx === 0 ? 'disabled' : ''}>↑</button>`
+          + `<button data-mv="down" ${idx === order.length - 1 ? 'disabled' : ''}>↓</button></div></div>`;
+      }).join('');
+      box.innerHTML = rows;
+      box.querySelectorAll('.step-row').forEach(row => row.querySelectorAll('[data-mv]').forEach(b =>
+        b.addEventListener('click', () => {
+          const sid = row.dataset.sid, i = order.indexOf(sid);
+          const j = b.dataset.mv === 'up' ? i - 1 : i + 1;
+          if (j < 0 || j >= order.length) return;
+          order.splice(i, 1); order.splice(j, 0, sid); draw();
+        })));
+    }
+    el.innerHTML = head(ex) + `<div class="ex-prompt">${md(ex.prompt)}</div>`
+      + `<div class="reorder"></div>`
+      + `<div class="ex-actions"><button class="btn" data-act="check">Check order</button></div>`
+      + `<div class="ex-feedback" hidden></div>` + cite(ex);
+    const box = el.querySelector('.reorder');
+    const fb = el.querySelector('.ex-feedback');
+    draw();
+    el.querySelector('[data-act="check"]').addEventListener('click', () => {
+      const ok = JSON.stringify(order) === JSON.stringify(ex.correct_order || []);
+      box.classList.add('answered');
+      box.querySelectorAll('.step-row').forEach((row, idx) =>
+        row.classList.add(order[idx] === (ex.correct_order || [])[idx] ? 'correct' : 'incorrect'));
+      fb.hidden = false; fb.className = 'ex-feedback ' + (ok ? 'ok' : 'crit');
+      fb.innerHTML = `<span class="fb-lbl">${ok ? 'Correct' : 'Not quite'}</span>${md(ex.explanation || '')}`;
+      setState(ex.id, { status: ok ? 'passed' : 'failed' }); refreshBadge(el, ex);
+    });
+  }
+
+  // — runnable lab (sandboxed iframe) ————————————————————————
+  const RUNNER_SRCDOC = `<!doctype html><meta charset="utf-8"><script>
+    let buf = [];
+    function flushJoin(sep){ const s = buf.join(sep); buf = []; return s; }
+    function runJS(code, harness, kind, expected){
+      buf = []; const log = console.log;
+      console.log = (...a)=>buf.push(a.map(x=>typeof x==='object'?JSON.stringify(x):String(x)).join(' '));
+      try {
+        (0,eval)(code + "\\n;\\n" + (harness||""));
+        const out = buf.join("\\n"); console.log = log;
+        if (kind === 'stdout') {
+          const ok = out.trim() === String(expected||'').trim();
+          return { ok, output: out, error: ok ? '' : 'stdout did not match expected' };
+        }
+        return { ok: true, output: out };
+      } catch(err){ const out = buf.join("\\n"); console.log = log; return { ok:false, output: out, error: String(err && err.message || err) }; }
+    }
+    let pyodide = null;
+    async function ensurePy(){
+      if (pyodide) return pyodide;
+      await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=${JSON.stringify(PYODIDE_CDN)}; s.onload=res; s.onerror=()=>rej(new Error('offline')); document.head.appendChild(s); });
+      pyodide = await loadPyodide(); return pyodide;
+    }
+    async function runPy(code, harness, kind, expected){
+      let py; try { py = await ensurePy(); } catch(e){ return { ok:false, offline:true, error:'Python runtime unavailable (offline)' }; }
+      buf = []; py.setStdout({ batched: (s)=>buf.push(s) });
+      try { await py.runPythonAsync(code + "\\n" + (harness||"")); const out = buf.join("");
+        if (kind === 'stdout'){ const ok = out.trim() === String(expected||'').trim(); return { ok, output: out, error: ok?'':'stdout did not match expected' }; }
+        return { ok:true, output: out };
+      } catch(err){ return { ok:false, output: buf.join(""), error: String(err && err.message || err) }; }
+    }
+    addEventListener('message', async (e)=>{
+      const m = e.data||{}; if (m.type!=='run') return;
+      let r; try { r = m.runtime==='python' ? await runPy(m.code,m.harness,m.kind,m.expected) : runJS(m.code,m.harness,m.kind,m.expected); }
+      catch(err){ r = { ok:false, error:String(err) }; }
+      parent.postMessage(Object.assign({ type:'result', id:m.id }, r), '*');
+    });
+    parent.postMessage({ type:'ready' }, '*');
+  <\/script>`;
+
+  function runInSandbox(job) {
+    return new Promise((resolve) => {
+      const frame = document.createElement('iframe');
+      frame.className = 'kg-lab-frame';
+      frame.setAttribute('sandbox', 'allow-scripts');
+      frame.srcdoc = RUNNER_SRCDOC;
+      let done = false;
+      const finish = (r) => { if (done) return; done = true; clearTimeout(timer); window.removeEventListener('message', onMsg); frame.remove(); resolve(r); };
+      const onMsg = (e) => {
+        if (e.source !== frame.contentWindow) return;
+        const m = e.data || {};
+        if (m.type === 'ready') frame.contentWindow.postMessage(Object.assign({ type: 'run' }, job), '*');
+        else if (m.type === 'result') finish(m);
+      };
+      window.addEventListener('message', onMsg);
+      const timer = setTimeout(() => finish({ ok: false, error: 'Timed out (possible infinite loop)' }), (job.timeout || 5000) + 1500);
+      document.body.appendChild(frame);
+    });
+  }
+
+  function renderLab(ex, el) {
+    const rt = ex.runtime || 'js';
+    el.innerHTML = head(ex) + `<div class="ex-prompt">${md(ex.prompt)}</div>`
+      + `<div class="runner"><div class="runtime-tag">runtime · ${esc(rt)}</div>`
+      + `<textarea class="runner-editor" spellcheck="false"></textarea>`
+      + `<div class="ex-actions"><button class="btn" data-act="run">Run &amp; check</button>`
+      + `<button class="btn ghost" data-act="solution">Reveal solution</button>`
+      + `<button class="btn ghost" data-act="reset">Reset</button></div>`
+      + `<div class="runner-out" hidden><div class="out-head">output</div><pre></pre></div>`
+      + `<div class="runner-verdict" hidden></div></div>` + cite(ex);
+    const ta = el.querySelector('.runner-editor'); ta.value = ex.starter_code || '';
+    const outBox = el.querySelector('.runner-out'); const outPre = outBox.querySelector('pre');
+    const verdict = el.querySelector('.runner-verdict');
+    const runBtn = el.querySelector('[data-act="run"]');
+    el.querySelector('[data-act="solution"]').addEventListener('click', () => { ta.value = ex.solution_code || ta.value; });
+    el.querySelector('[data-act="reset"]').addEventListener('click', () => { ta.value = ex.starter_code || ''; outBox.hidden = true; verdict.hidden = true; });
+    runBtn.addEventListener('click', async () => {
+      runBtn.disabled = true; runBtn.textContent = (rt === 'python' ? 'Loading Python…' : 'Running…');
+      const chk = ex.check || {};
+      const r = await runInSandbox({ id: ex.id, runtime: rt, code: ta.value, harness: chk.harness || '', kind: chk.kind || 'assert', expected: chk.expected_stdout, timeout: chk.timeout_ms });
+      runBtn.disabled = false; runBtn.textContent = 'Run & check';
+      if (r.output != null && r.output !== '') { outBox.hidden = false; outPre.innerHTML = `<span class="o">${esc(r.output)}</span>`; }
+      verdict.hidden = false;
+      if (r.offline) {
+        verdict.className = 'runner-verdict warn';
+        verdict.innerHTML = `<span class="v-icon">⚠</span><span>Python needs a network connection (loads Pyodide once). You're offline — reveal the solution or run it locally, then use “Check with Claude”.</span>`;
+        return;
+      }
+      if (r.ok) {
+        verdict.className = 'runner-verdict pass';
+        verdict.innerHTML = `<span class="v-icon">✓</span><span>Passed — the check is satisfied.</span>`;
+        setState(ex.id, { status: 'passed' });
+      } else {
+        verdict.className = 'runner-verdict fail';
+        verdict.innerHTML = `<span class="v-icon">✗</span><span>${esc(r.error || 'Check failed.')}</span>`;
+        setState(ex.id, { status: 'failed' });
+      }
+      refreshBadge(el, ex);
+    });
+  }
+
+  // — open task (check with Claude) ——————————————————————————
+  function renderOpen(ex, el) {
+    el.innerHTML = head(ex) + `<div class="ex-prompt">${md(ex.prompt)}</div>`
+      + `<textarea class="attempt-box" placeholder="Write your answer here, then send it to Claude to be graded against the rubric…"></textarea>`
+      + `<div class="ex-actions"><button class="btn" data-act="grade">Copy grading prompt for Claude</button></div>`
+      + `<div class="ex-feedback note" hidden></div>` + cite(ex);
+    const ta = el.querySelector('.attempt-box');
+    const fb = el.querySelector('.ex-feedback');
+    el.querySelector('[data-act="grade"]').addEventListener('click', async () => {
+      const cmd = `/the-knowledge-guy check ${skillSlug} ${bookNumber} ${ex.id}\n--- my attempt ---\n` + (ta.value || '(no attempt written yet)');
+      let copied = false;
+      try { await navigator.clipboard.writeText(cmd); copied = true; } catch (e) {
+        ta.value = cmd; ta.focus(); ta.select(); // fallback: select so the user can Cmd-C
+      }
+      setState(ex.id, { status: 'sent' });
+      fb.hidden = false;
+      fb.innerHTML = `<span class="fb-lbl">${copied ? 'Copied' : 'Select & copy'}</span>`
+        + (copied ? 'Paste it into Claude Code to have your answer graded against the rubric.'
+                  : 'The grading command is now in the box above — copy it and paste into Claude Code.');
+      refreshBadge(el, ex);
+    });
+  }
+
+  function refreshBadge(el, ex) {
+    const h = el.querySelector('.ex-head'); if (!h) return;
+    const fresh = document.createElement('div'); fresh.innerHTML = head(ex);
+    h.replaceWith(fresh.firstChild);
+  }
+
+  // — dispatch ————————————————————————————————————————————————
+  const RENDER = {
+    mcq: renderOptions, 'predict-output': renderOptions, 'fix-the-bug': renderOptions,
+    'spot-anti-pattern': renderOptions, 'fill-in-the-blank': renderFill,
+    'reorder-steps': renderReorder, lab: renderLab,
+    'design-task': renderOpen, explain: renderOpen, 'threat-model': renderOpen, 'repro-writeup': renderOpen,
+  };
+  exercises.forEach(ex => {
+    const el = document.createElement('div');
+    el.className = 'exercise'; el.id = 'ex-' + (ex.id || '');
+    const fn = RENDER[ex.type] || (ex.family === 'open' ? renderOpen : ex.family === 'runnable' ? renderLab : renderOptions);
+    try { fn(ex, el); }
+    catch (e) { el.innerHTML = `<div class="ex-feedback crit"><span class="fb-lbl">Unsupported</span>Exercise <code>${esc(ex.id)}</code> (type <code>${esc(ex.type)}</code>) could not be rendered.</div>`; }
+    mount.appendChild(el);
+  });
+  paintMastery();
+})();
+</script>
+
+<!-- Standalone mastery meters (course index): paint any .mastery[data-total]
+     from the shared progress store. A skill-level scope sums all its chapters. -->
+<script>
+(() => {
+  const meters = document.querySelectorAll('.mastery[data-total]');
+  if (!meters.length) return;
+  let all = {}; try { all = JSON.parse(localStorage.getItem('kg-lab-progress-v1')) || {}; } catch (e) {}
+  const passedIn = (s) => Object.values(s || {}).filter(x => x && x.status === 'passed').length;
+  meters.forEach(m => {
+    const scope = m.dataset.scope, total = +m.dataset.total || 0;
+    let passed = 0;
+    if (all[scope]) passed = passedIn(all[scope]);
+    else Object.keys(all).filter(k => k === scope || k.startsWith(scope + '/')).forEach(k => passed += passedIn(all[k]));
+    const pct = total ? Math.round(passed / total * 100) : 0;
+    const f = m.querySelector('.mastery-fill'); if (f) f.style.width = pct + '%';
+    m.classList.toggle('complete', total > 0 && passed === total);
+    const l = m.querySelector('.mastery-label'); if (l) l.innerHTML = `<span class="done">${passed}</span>/${total} cleared`;
+  });
+})();
 </script>
 </body>
 </html>

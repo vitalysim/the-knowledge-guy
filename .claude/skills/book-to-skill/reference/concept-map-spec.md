@@ -199,6 +199,15 @@ and is consumed by future skill invocations + by resume logic:
 with `schema_version: 1` (or no version field) lack `book_number`; the
 `backfill_book_numbers.py` script populates it retroactively.
 
+`schema_version` tracks the **chapter-numbering contract only**. Stage 3
+PRACTICE (the optional `practice/<book_number>-<slug>.json` files) is
+**additive** and introduces no new chapter-labeling semantics, so it does
+**not** bump the version — a skill with practice stays at
+`schema_version: 2`. The `course` renderer discovers practice by **file
+presence** (a `practice/` file whose stem matches a manifest chapter),
+never by a version flag. Practice files carry their *own* independent
+`schema_version` (see `practice-template.md`), decoupled from this one.
+
 ## Master SKILL.md template
 
 The generated skill's `SKILL.md` body stays **under ~4,000 tokens** —

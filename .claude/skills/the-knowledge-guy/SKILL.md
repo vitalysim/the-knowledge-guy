@@ -8,7 +8,10 @@ description: >-
   and synthesises one comprehensive cross-domain answer; (2) **walk**:
   proposes a curriculum and walks the user through it interactively — one
   concept at a time, taught from the source chapters, then quizzed via
-  forced-choice questions, with progress saved across sessions.
+  forced-choice questions, with progress saved across sessions; (3)
+  **course**: renders interactive learn-by-doing websites per chapter —
+  theory plus auto-checked quizzes, in-browser runnable code labs, and
+  open-ended tasks graded by Claude.
 when_to_use: >-
   **Ask mode** triggers — "ask the knowledge guy", "what do my books say
   about", "consult all my skills", "comprehensive answer", "cross-domain",
@@ -19,6 +22,12 @@ when_to_use: >-
   **Nutshell mode** triggers — "nutshell <book>", "summarise <book>",
   "summarize <book>", "summary <book>", "tldr <book>" — returns a
   per-chapter micro-summary skim of the whole book.
+  **Course / lab mode** triggers — "course <book>", "lab <book> [<chapter>]",
+  "practice <book>", "hands-on <book>", "drills <book>", "exercises <book>",
+  "learn by doing" — builds an interactive learn-by-doing site per chapter
+  (theory + auto-checked quizzes + in-browser code labs + open tasks).
+  **Check sub-mode** triggers — "check <book> <chapter> <exercise-id>",
+  "grade", "submit" — grades an open-ended practice answer against its rubric.
   **Other artifact triggers** — "compare <topic>", "comparison <topic>",
   "cheatsheet <book>", "glossary [<book>]", "concept map <book>",
   "toolkit <book> <chapter>", "library" / "bookshelf" — each produces
@@ -27,7 +36,7 @@ allowed-tools: >-
   Bash(ls *) Bash(find *) Bash(cat *) Bash(test *) Bash(pwd)
   Bash(mkdir *) Bash(date *) Bash(grep *)
   Read Write Edit Glob Grep Agent Skill AskUserQuestion
-argument-hint: <question>  |  walk <topic>  |  resume  |  nutshell <book>  |  compare <topic>  |  cheatsheet <book>  |  glossary  |  concept-map <book>  |  toolkit <book> <ch>  |  library  |  add <path-to-pdf-or-epub>
+argument-hint: <question>  |  walk <topic>  |  course <book> [<ch>]  |  check <book> <ch> <id>  |  resume  |  nutshell <book>  |  compare <topic>  |  cheatsheet <book>  |  glossary  |  concept-map <book>  |  toolkit <book> <ch>  |  library  |  add <path-to-pdf-or-epub>
 ---
 
 # the-knowledge-guy — knowledge router + interactive teacher
@@ -45,6 +54,12 @@ in `artifacts/` using the shared design system:
   memory so the user can resume across sessions. Procedure in
   [walk-mode.md](walk-mode.md); worked transcripts in
   [examples.md](examples.md).
+- **Course mode** — render an interactive *learn-by-doing* website per
+  chapter: theory from the chapter toolkit, then a practice section with
+  auto-checked quizzes, in-browser runnable code labs, and open tasks.
+  Driven by the per-chapter `practice/<book_number>-<slug>.json` that
+  book-to-skill's Stage 3 produces. The **check** sub-mode grades
+  open-ended answers against their rubric and records progress.
 - **Nutshell mode** — per-chapter micro-summary skim of a whole book.
 - **Library mode** — render the bookshelf overview.
 - **Comparison mode** — one concept across multiple books, side by side.
@@ -72,7 +87,7 @@ test -d "$ARTIFACTS" || mkdir -p "$ARTIFACTS"
 ls "$ARTIFACTS" 2>/dev/null
 ls "$ARTIFACTS"/nutshells "$ARTIFACTS"/cheatsheets "$ARTIFACTS"/toolkits \
    "$ARTIFACTS"/concept-maps "$ARTIFACTS"/glossaries "$ARTIFACTS"/walks \
-   "$ARTIFACTS"/comparisons "$ARTIFACTS"/synthesis 2>/dev/null
+   "$ARTIFACTS"/comparisons "$ARTIFACTS"/synthesis "$ARTIFACTS"/courses 2>/dev/null
 ```
 
 Use this listing to:
@@ -100,28 +115,37 @@ Inspect `$QUERY`, checking in this order:
 
 1. **Resume** — if `$QUERY` is the literal `resume`, **walk mode** (resume
    an existing walk — see walk-mode.md Step 1).
-2. **Walk** — starts with `walk`, `teach`, `lesson`, `tour`, `learn`,
+2. **Check** — starts with `check`, `grade`, or `submit` (typically
+   `check <skill> <book_number> <exercise-id>`, often pasted from a course
+   page's "Check with Claude" button) → **check sub-mode** below.
+3. **Course** — starts with `course`, `lab`, `practice`, `hands-on`,
+   `drill`, `drills`, or `exercises`; OR starts with "learn by doing" /
+   "learn-by-doing"; OR ends with `--course` / `--lab` (strip the flag,
+   keep the target) → **course mode** below. Checked before Walk so
+   "learn by doing X" builds a course rather than walking; bare `learn`
+   still routes to Walk.
+4. **Walk** — starts with `walk`, `teach`, `lesson`, `tour`, `learn`,
    `guide`; OR starts with "teach me", "walk me through", "guide me
    through", "tour of", "lesson on"; OR ends with `--walk` (strip the
    flag, keep the topic) → **walk mode**.
-3. **Nutshell** — starts with `nutshell`, `summarise`, `summarize`,
+5. **Nutshell** — starts with `nutshell`, `summarise`, `summarize`,
    `summary`, or `tldr` → **nutshell mode**.
-4. **Library** — equals `library`, `bookshelf`, `books`, or `shelf`
+6. **Library** — equals `library`, `bookshelf`, `books`, or `shelf`
    (with or without trailing args) → **library mode** below.
-5. **Comparison** — starts with `compare`, `comparison`, `comparison of`,
+7. **Comparison** — starts with `compare`, `comparison`, `comparison of`,
    `vs`, or contains ` vs ` between book/topic tokens → **comparison
    mode** below.
-6. **Cheatsheet** — starts with `cheatsheet`, `cheat-sheet`, `cheat sheet`,
+8. **Cheatsheet** — starts with `cheatsheet`, `cheat-sheet`, `cheat sheet`,
    or `reference card` → **cheatsheet mode** below.
-7. **Glossary** — starts with `glossary`, `terms`, `define`, or
+9. **Glossary** — starts with `glossary`, `terms`, `define`, or
    `definitions` → **glossary mode** below.
-8. **Concept-map** — starts with `concept-map`, `concept map`,
+10. **Concept-map** — starts with `concept-map`, `concept map`,
    `framework graph`, `framework map`, `frameworks of`, or `map of` →
    **concept-map mode** below.
-9. **Toolkit** — starts with `toolkit`, `chapter`, `deep-dive`, or
+11. **Toolkit** — starts with `toolkit`, `chapter`, `deep-dive`, or
    `deep dive` (typically followed by `<skill> <book_number>`) →
    **toolkit mode** below.
-10. **Ingest** — `$QUERY` matches any of:
+12. **Ingest** — `$QUERY` matches any of:
     - contains a token of the form `\S+\.(pdf|epub)` (case-insensitive), OR
     - starts with `add book`, `add this book`, `import book`, `study this`,
       `study pdf`, `study epub`, `convert book`, `convert pdf`,
@@ -130,12 +154,12 @@ Inspect `$QUERY`, checking in this order:
     → **ingest mode**. Order matters: walk triggers are checked first,
     so "walk me through ~/foo.pdf" still walks an existing skill rather
     than re-importing.
-11. **Default** — **ask mode**, continue with this file.
+13. **Default** — **ask mode**, continue with this file.
 
-**Walk mode hands off to `walk-mode.md` from its Step 1. Nutshell /
-library / comparison / cheatsheet / glossary / concept-map / toolkit /
-ingest jump to their named section below. Otherwise continue with the
-ask-mode procedure.**
+**Walk mode hands off to `walk-mode.md` from its Step 1. Course / check /
+nutshell / library / comparison / cheatsheet / glossary / concept-map /
+toolkit / ingest jump to their named section below. Otherwise continue
+with the ask-mode procedure.**
 
 ---
 
@@ -163,10 +187,15 @@ procedure is identical regardless of mode:
 
 **Cache rule.** Before generating, check whether the target file
 already exists. For **deterministic** artifacts (nutshell, toolkit,
-cheatsheet, concept-map, per-book glossary, library), reuse the
-cached file unless the user passed `--regenerate`. For
+cheatsheet, concept-map, per-book glossary, library, **course chapter
+pages**), reuse the cached file unless the user passed `--regenerate`. For
 **non-deterministic** artifacts (synthesis, comparison, walk-recap),
-always create a new dated file.
+always create a new dated file. The **course index** (`courses/<slug>/index.html`)
+is cheap and reflects progress, so it is **always regenerated**. Course
+chapter pages are fully self-contained: their quizzes and labs are checked
+client-side in the browser; the only non-deterministic part — grading an
+open-ended task — happens **in chat** via the `check` sub-mode, never in
+the artifact.
 
 **Never invent CSS.** Pull the EXTRA_CSS block from `layouts.md`
 verbatim. If a layout needs styling beyond what's documented, use
@@ -441,6 +470,166 @@ Triggered by `toolkit <book> <chapter>`, `chapter <book> <chapter>`,
    `--regenerate`.
 6. Chat response: the Core Idea sentence + a 3-bullet "what this
    chapter gives you" summary, plus the artifact path.
+
+---
+
+## Course mode (interactive learn-by-doing site)
+
+Builds an interactive website per chapter — **theory** taught from the
+chapter toolkit, then a **practice** section with auto-checked quizzes,
+in-browser runnable code labs, and open-ended tasks. The practice content
+comes from `<skill>/practice/<book_number>-<slug>.json` (produced by
+book-to-skill Stage 3). Course mode is a **renderer** — it never invents
+exercises; a chapter with no practice file renders theory-only.
+
+Triggered by `course <book>`, `lab <book> [<chapter>]`, `practice <book>`,
+`hands-on <book>`, `drills <book>`, `exercises <book>`, `learn by doing …`.
+
+### Step C1 — Resolve the target
+
+Strip the trigger verb and any `--regenerate` / `--course` / `--lab` flag
+from `$QUERY`. Resolve the first token to a skill slug the same way
+Nutshell mode does (substring + fuzzy; `AskUserQuestion` to disambiguate
+2+). If a second token is present, resolve it to a `book_number` against
+`<skill>/chapters_manifest.json` (by `book_number` directly or chapter-title
+substring) → **single-chapter** build. No second token → **whole-book**
+build. Read `chapters_manifest.json` into memory.
+
+```bash
+COURSES="$(pwd)/artifacts/courses/<skill-slug>"; mkdir -p "$COURSES"
+ls "$(pwd)/.claude/skills/<skill-slug>/practice" 2>/dev/null   # which chapters have practice
+```
+
+### Step C2 — Sequence the chapters (whole-book build)
+
+Spawn **one** planner subagent (the walk-mode Step-3 pattern). It reads
+**only** `<skill>/SKILL.md` (the concept-map DAG + topic index) and
+`chapters_manifest.json`, then returns a prerequisite-ordered chapter list
+as one line of JSON:
+
+```json
+[{"book_number":"ch01","title":"…","prereqs":[],"order":1}, …]
+```
+
+It topologically sorts the `A → builds on / requires → B` edges so
+prerequisites precede dependents. **Fallbacks:** if the DAG is absent or
+cyclic, use manifest `index` order. Always **skip** chapters whose
+`book_number` starts with `fm`/`bm` or whose `word_count < 300` (same rule
+as nutshell). For a single-chapter build, skip this step.
+
+### Step C3 — Per chapter: cache, theory, practice
+
+For each chapter in the sequence (or the one requested):
+
+1. **Cache check** — if `artifacts/courses/<slug>/<book_number>.html`
+   exists and `--regenerate` was not passed, reuse it; skip to the next
+   chapter (do **not** re-run the teaching subagent).
+2. **Practice** — read `<skill>/practice/<book_number>-<slug>.json` if it
+   exists. If missing, this chapter renders theory-only with a
+   `.callout.caution` ("No practice set yet — run `/book-to-skill <book>
+   --regenerate` to build one.").
+3. **Theory** — spawn a teaching subagent using the **walk-mode Step-6b
+   teaching prompt** (depth = intermediate), pointed at
+   `<skill>/SKILL.md` (orientation) + `<skill>/chapters/<book_number>-<slug>.md`
+   (the source). It returns the theory section composed from existing
+   components (`.def`, `.worked`, `.code-block`, `.callout`, `.capsule`,
+   `.source`). Fan these out in parallel across uncached chapters (batch ~6).
+
+### Step C4 — Render each chapter page (layout 11)
+
+Follow **Step 0.5** with `design-system/layouts.md` **§11 · Course chapter**:
+- Compose the body: chrome → theory section → practice section + the
+  `#kg-practice` mount + the `#kg-exercises` JSON island.
+- **Sanitize the island** (the one security-critical step): inline the
+  practice file's `exercises` array, but for every exercise with
+  `"family": "open"`, **remove `rubric` and `model_answer`** — they are the
+  grading key and must never reach the browser. Whitelist per the
+  field-visibility rule in `book-to-skill/reference/practice-template.md`.
+  Also replace every `<` with the JSON unicode escape `<` in the
+  island text (still valid JSON; `JSON.parse` decodes it back) so chapter
+  content can never break out of the `<script>` tag with a stray
+  `</script>`.
+- Both the `.mastery` meter and the `#kg-practice` mount carry
+  `data-scope="<skill-slug>/<book_number>"` — they must match (the engine
+  keys localStorage on it).
+- Write `artifacts/courses/<skill-slug>/<book_number>.html`.
+
+The shell's lab engine renders every exercise family, checks answers
+client-side, runs labs in a sandboxed iframe, and saves progress to
+localStorage. You do **not** hand-author exercise cards.
+
+### Step C5 — Render the course index (layout 12) + memory
+
+- Render `artifacts/courses/<skill-slug>/index.html` from **§12 · Course
+  index** — the syllabus in DAG order, prereq chips, and per-chapter
+  progress meters (`data-total` = each chapter's exercise count; the shell
+  paints them from localStorage). **Always regenerate** this file.
+- Write/update the course memory file (Step CM, below).
+- Regenerate `artifacts/index.html` with a new **Courses** group.
+
+### Step C6 — Chat response
+
+2–3 lines: book, N chapters built (+ how many were cached), the first
+chapter to open, and the index path. Tell the user the open-ended tasks
+have a **"Check with Claude"** button that pastes a `check …` command back
+into this chat for grading.
+
+### Step CM — Course memory (shared with walk)
+
+Write `~/.claude/projects/-Users-vitaly-MyPlace-projects-the-knowledge-guy/memory/course-<skill-slug>.md`,
+reusing the walk-memory frontmatter + `✅ / ⚠ / ▶ / ⏳` grammar (see
+walk-mode.md Step 7). One `## Practice` line per chapter listing its
+exercise `id`s and state. This markdown is the **durable source of truth**
+the `check` sub-mode updates; the browser's localStorage is the live cache.
+Add a `- [Course: <book>](course-<slug>.md) — <M> exercises, last touched <date>`
+line to `MEMORY.md`.
+
+---
+
+## Check sub-mode (grade an open-ended practice answer)
+
+Closes the open-task loop. A course page's **"Check with Claude"** button
+copies a command of the form:
+
+```
+/the-knowledge-guy check <skill-slug> <book_number> <exercise-id>
+--- my attempt ---
+<the user's written answer>
+```
+
+### Step K1 — Parse
+
+Read the skill slug, `book_number`, and `exercise-id` from the three
+tokens after `check`. Everything after the `--- my attempt ---` marker is
+the user's attempt (may be empty — handle gracefully).
+
+### Step K2 — Load the rubric (server-side fields)
+
+Read `<skill>/practice/<book_number>-<slug>.json`, find the exercise by
+`id`, and take its `rubric` (criteria + weights) and `model_answer` — the
+**server-side-only** fields the browser never saw. Also read
+`<skill>/chapters/<book_number>-<slug>.md` for ground truth on framework
+names. If the file or id is missing, say so and stop.
+
+### Step K3 — Grade
+
+Spawn **one** focused subagent (the ask-mode fan-out pattern, single
+skill). Give it the rubric, the `model_answer`, the chapter file, and the
+user's attempt. It returns: a verdict per rubric criterion (met / partial /
+missed), an overall **pass / revisit**, and the single most important thing
+to fix. Cite `[<skill-slug> <book_number>]` inline like every other mode.
+
+### Step K4 — Record + respond
+
+- Update `course-<skill-slug>.md`: flip that exercise's marker to
+  `✅ graded: pass` or `⚠ graded: revisit`, and append the fumble to
+  `## Notes`. Update the `Last updated:` date and the `MEMORY.md` line.
+- Emit a small result artifact per Step 0.5 (reuse the **§11** layout's
+  feedback components, or a compact synthesis-style card) at
+  `artifacts/courses/<skill-slug>/<book_number>-check-<exercise-id>.html`,
+  and refresh `artifacts/index.html`.
+- Chat: the overall verdict + the one thing to fix + the citation, and a
+  pointer back to the course page to continue.
 
 ---
 

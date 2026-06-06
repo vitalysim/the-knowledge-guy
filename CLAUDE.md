@@ -9,18 +9,22 @@ test runner, no entry point. Two installed entry points carry the whole
 system:
 
 - **`/book-to-skill`** (`.claude/skills/book-to-skill/`) — the **ingest
-  pipeline**. Map-reduce in 5 stages (Stage 0 EXTRACT → Pass 0 SPINE →
-  Stage 1 MAP → Stage 2 REDUCE → Stage 2.5 NUTSHELL) that turns a
-  PDF/EPUB into a two-tier knowledge skill: ~3K-token always-loaded
-  `SKILL.md` + on-demand `chapters/<book_number>-<slug>.md` toolkits.
-  Plumbing in Python (`scripts/extract.py`), intelligence in Claude
-  (Stages 1 & 2 are LLM-driven subagent fan-outs).
+  pipeline**. Map-reduce in 6 stages (Stage 0 EXTRACT → Pass 0 SPINE →
+  Stage 1 MAP → Stage 2 REDUCE → Stage 2.5 NUTSHELL → **Stage 3 PRACTICE**,
+  the last opt-in) that turns a PDF/EPUB into a two-tier knowledge skill:
+  ~3K-token always-loaded `SKILL.md` + on-demand
+  `chapters/<book_number>-<slug>.md` toolkits, plus optional
+  `practice/<book_number>-<slug>.json` exercise sets. Plumbing in Python
+  (`scripts/extract.py`), intelligence in Claude (Stages 1, 2 & 3 are
+  LLM-driven subagent fan-outs).
 - **`/the-knowledge-guy`** (`.claude/skills/the-knowledge-guy/`) — the
   **router + interactive teacher** across every installed domain skill.
   Auto-discovers them by scanning `.claude/skills/*/SKILL.md` at every
-  invocation. **Eleven modes**: `ask` (default — parallel cross-domain
+  invocation. **Thirteen modes**: `ask` (default — parallel cross-domain
   synthesis essay), `walk` (interactive curriculum + quizzes, progress
   saved to `~/.claude/projects/<this project>/memory/walk-*.md`),
+  `course` (interactive learn-by-doing site per chapter — theory + quizzes
+  + in-browser code labs) and its `check` sub-mode (grades open tasks),
   `nutshell`, `library`, `comparison`, `cheatsheet`, `glossary`,
   `concept-map`, `toolkit`, `ingest`, `resume`.
 
@@ -33,7 +37,7 @@ Read `README.md` for the user-facing narrative. Read
 `.claude/skills/book-to-skill/SKILL.md` for the pipeline procedure (this
 *is* the runbook). Read
 `.claude/skills/the-knowledge-guy/SKILL.md` for the router behavior and
-all eleven modes.
+all thirteen modes.
 
 ## Canonical chapter labels — `book_number` (schema_version 2)
 
@@ -70,6 +74,8 @@ artifacts/
 ├── synthesis/YYYY-MM-DD-<slug>.html        ← dated, accumulates
 ├── walks/<topic>-step-<N>.html             ← overwritten per step
 ├── walks/<topic>-recap.html                ← durable
+├── courses/<slug>/<book_number>.html       ← cached interactive chapter site
+├── courses/<slug>/index.html               ← syllabus, always regenerated
 └── comparisons/  toolkits/  cheatsheets/
     concept-maps/  glossaries/              ← cached per slug
 ```
@@ -77,18 +83,28 @@ artifacts/
 The design system is **Knowledge Guide · Modern** at
 `.claude/skills/the-knowledge-guy/design-system/` — Bricolage
 Grotesque + JetBrains Mono, single cobalt accent, light/dark +
-density toggle persisted in `localStorage`, 24 named components.
-Three files there:
+density toggle persisted in `localStorage`. Three files there:
 
 - `shell.html` — the wrapper. Placeholders `{{TITLE}}`,
-  `{{EXTRA_CSS}}`, `{{BODY}}`. Read it, substitute, write.
+  `{{EXTRA_CSS}}`, `{{BODY}}`. Read it, substitute, write. It also
+  carries the **lab engine** — a guarded `<script>` that hydrates a
+  `#kg-exercises` JSON island into interactive practice (auto-checked
+  quizzes, runnable code labs in a sandboxed `<iframe>`, "check with
+  Claude" buttons) and saves progress to `localStorage`. No-ops on any
+  page without the island, so it ships harmlessly in every artifact.
 - `layouts.md` — one section per use case (nutshell / synthesis /
   walk-session / walk-recap / comparison / toolkit / glossary /
-  cheatsheet / concept-map / library). Each has the path under
-  `artifacts/`, the title, EXTRA_CSS (usually empty — the shell
-  already has every component), and the body template.
+  cheatsheet / concept-map / library / **course-chapter / course-index**).
+  Each has the path under `artifacts/`, the title, EXTRA_CSS (usually
+  empty — the shell already has every component), and the body template.
 - `reference/full-demo-light.html` + `-dark.html` — canonical visual
   contract of every component, in both themes.
+
+**One CDN exception.** Artifacts are otherwise fully self-contained
+(CSS/JS inline; Google Fonts the only external request). Python code
+labs lazy-load **Pyodide from a CDN on first Run only**, and degrade to
+"check with Claude" when offline. JS labs need no network. Do not inline
+Pyodide. Prefer `runtime: "js"` labs where the concept allows.
 
 **Never invent CSS.** Pull EXTRA_CSS from `layouts.md` verbatim. If
 you need a one-off tweak, use inline `style=""`. New utility classes
@@ -96,10 +112,11 @@ belong in `shell.html`, added deliberately — never per-artifact.
 
 After writing any artifact, regenerate `artifacts/index.html` so the
 catalog reflects the new file. Deterministic outputs (nutshell,
-toolkit, cheatsheet, concept-map, per-book glossary, library) are
-**cached** — reuse the existing file on repeat invocations unless the
-user passes `--regenerate`. Non-deterministic ones (synthesis,
-comparison, walk-recap) get dated filenames and accumulate.
+toolkit, cheatsheet, concept-map, per-book glossary, library, **course
+chapter pages**) are **cached** — reuse the existing file on repeat
+invocations unless the user passes `--regenerate`. Non-deterministic ones
+(synthesis, comparison, walk-recap) get dated filenames and accumulate.
+The **course index** is regenerated every time (cheap; reflects progress).
 
 ## Operational commands
 
@@ -121,8 +138,32 @@ are idempotent.
 # so it works for chapters named intro/appendix-a/fm as well as chNN.
 ./book-to-skill/.venv/bin/python ./book-to-skill/scripts/lint_chapters.py <skill-dir>
 
+# Validate Stage-3 practice files AND execute every runnable lab to prove
+# its model solution passes (and the starter fails). Hard-fails broken labs,
+# bad MCQs, book_number mismatches. Run after Stage 3 / before shipping.
+./book-to-skill/.venv/bin/python ./book-to-skill/scripts/lint_practice.py <skill-dir>
+
+# Repair book_number drift in practice/*.json + course-*.md after a re-backfill
+# (sibling of upgrade_walk_memory.py; joins practice→manifest by chapter title).
+./book-to-skill/scripts/upgrade_course_memory.py [memory-dir] [--dry-run]
+
 # Provision the per-skill Python venv (one-time)
 ./book-to-skill/scripts/setup.sh
+```
+
+There is a **second, separate `scripts/` at the repo root** — do not
+confuse it with `book-to-skill/scripts/`. It holds repo-level tooling,
+not pipeline logic:
+
+```bash
+# Benchmark the real cost of one /book-to-skill ingest. Two-step:
+#   1) ./scripts/measure_ingest.sh --start   (snapshots subscription usage)
+#   2) run /book-to-skill <book> in a fresh window
+#   3) ./scripts/measure_ingest.sh --finish [session_id]
+# Reports wall-clock, quota Δ, token totals, main-vs-Stage-1 split,
+# per-subagent breakdown, and an equivalent-API-cost estimate. Reads the
+# session + agent-*.jsonl under ~/.claude/projects/<this project>/.
+./scripts/measure_ingest.sh --start | --finish
 ```
 
 The slash commands themselves (`/book-to-skill`, `/the-knowledge-guy`,
@@ -138,8 +179,9 @@ Claude Code's skill runtime; do not try to call them from bash.
 | Per-chapter toolkit shape | `book-to-skill/reference/chapter-template.md` |
 | Per-chapter nutshell shape + numbering rule | `book-to-skill/reference/nutshell-template.md` |
 | Genre-specific extraction profiles | `book-to-skill/reference/genre-profiles.md` |
-| Routing, ask synthesis, and the 11 modes | `the-knowledge-guy/SKILL.md` |
-| Walk mode procedure | `the-knowledge-guy/walk-mode.md` |
+| Stage-3 practice file shape (the frozen contract) | `book-to-skill/reference/practice-template.md` |
+| Routing, ask synthesis, and the 13 modes (incl. `course` / `check`) | `the-knowledge-guy/SKILL.md` |
+| Walk mode procedure + course/check memory grammar | `the-knowledge-guy/walk-mode.md` |
 | Worked walk transcripts | `the-knowledge-guy/examples.md` |
 | HTML artifact layouts (one per use case) | `the-knowledge-guy/design-system/layouts.md` |
 | HTML shell + design tokens | `the-knowledge-guy/design-system/shell.html` |
@@ -176,6 +218,21 @@ Claude Code's skill runtime; do not try to call them from bash.
   `artifacts/<subfolder>/<filename>.html`, refresh
   `artifacts/index.html`. Caching rules per the artifacts section
   above; non-deterministic outputs always create a new dated file.
+- **Stage 3 (PRACTICE) is opt-in and additive — like Stages 1 & 2, it's
+  an LLM subagent fan-out** (one per chapter) driven by prompts in
+  `book-to-skill/SKILL.md` Step 8.6. It writes
+  `practice/<book_number>-<slug>.json` (frozen schema in
+  `reference/practice-template.md`). It does **not** bump
+  `schema_version` (stays `2`) — the `course` renderer discovers practice
+  by **file presence**, never a version flag. The runbook's
+  legacy-guard / `assert schema_version == 2` are unchanged.
+- **`course` mode is a renderer; `check` closes the loop in chat.** A
+  course page is fully self-contained — quizzes/labs check client-side.
+  The only non-deterministic part, grading an *open* task, happens in chat
+  via the `check` sub-mode (the page's "Check with Claude" button copies a
+  `check …` command to paste back). `course-<slug>.md` memory (walk-mode
+  grammar) is the durable source of truth; browser `localStorage` is a
+  live cache.
 
 ## Conventions to preserve when editing
 
@@ -187,6 +244,14 @@ Claude Code's skill runtime; do not try to call them from bash.
 - **Filenames are `<book_number>-<slug>.md`** in `chapters/`. The slug
   is normalised lower-kebab without redundant prefixes
   (`backfill_book_numbers.py:_strip_redundant_prefix` handles cleanup).
+  **Practice files mirror this exactly**: `practice/<book_number>-<slug>.json`,
+  keyed off `book_number` (never `index`). `lint_practice.py` hard-fails a
+  stem/`book_number` mismatch.
+- **Practice answer keys never reach the browser.** When `course` mode
+  inlines the `#kg-exercises` island, it must strip `rubric` and
+  `model_answer` from every `open` exercise (they're consumed only by the
+  `check` sub-mode). The renderer whitelists fields per family — see
+  `practice-template.md` → "Field-visibility rule".
 - **Drop-in extensibility is sacred** — never hardcode skill slugs in
   routing or rendering. The router rediscovers skills every invocation.
 - **Design system: never invent CSS in an artifact.** Pull the
@@ -206,7 +271,11 @@ Walks save state to `~/.claude/projects/<this project>/memory/walk-<slug>.md`.
 The file uses shorthand like `housel/ch04` for chapter references; this
 shorthand is bound to the *current* `book_number` numbering and will
 drift if a skill is re-backfilled. Run `upgrade_walk_memory.py` after
-any pipeline change that renumbers chapters.
+any pipeline change that renumbers chapters. **Courses** save the same
+way to `course-<skill-slug>.md` (identical walk grammar — see
+`walk-mode.md` → "Course memory"); after a re-backfill run
+`upgrade_course_memory.py`, which repairs both the `course-*.md` files
+**and** the `practice/*.json` filenames/labels.
 
 ## Things you should NOT do
 
@@ -227,3 +296,10 @@ any pipeline change that renumbers chapters.
   saturated accent (cobalt) is load-bearing; semantic colors
   (`--ok`, `--warn`, `--crit`, `--insight`) are for actual state, used
   sparingly.
+- Do not render `rubric` or `model_answer` into a course page — they are
+  the open-task grading key and must stay server-side (chat only).
+- Do not ship a runnable lab without running `lint_practice.py` — it
+  **executes** each lab; a model solution that can't pass its own check is
+  a hard error, not a warning.
+- Do not inline Pyodide into artifacts (it's ~10 MB). Lazy-load it from
+  CDN on first Python Run and degrade to "check with Claude" offline.

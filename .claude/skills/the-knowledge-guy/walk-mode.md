@@ -328,6 +328,60 @@ index, not a memory — see CLAUDE.md auto-memory conventions).
 
 Use a single `Bash` `date +%Y-%m-%d` to get the date; never invent dates.
 
+## Course memory (shared with `course` / `check`)
+
+`course` mode and its `check` sub-mode (see `SKILL.md`) reuse this exact
+grammar in a sibling file, `$MEM_DIR/course-<skill-slug>.md`. A **course
+is a kind of walk** — same frontmatter and the same `✅ / ⚠ / ▶ / ⏳`
+markers — so a future reader (chat or human) parses both identically.
+
+This markdown is the **durable source of truth** for course progress; the
+browser's `localStorage` (key `kg-lab-progress-v1`) is only a live cache.
+They sync at two one-directional points (no merge conflicts): (1)
+**browser → markdown** when the user pastes a `check …` command (the
+"Check with Claude" button) and `check` records the result; (2) **markdown
+→ browser** the next time `course` re-renders a page (it can seed the
+current state into the page). Auto-checked quiz/lab progress that never
+goes through a `check` round-trip lives only in the browser — that is the
+known, deliberate limit of a backend-free design.
+
+```markdown
+---
+name: course-<skill-slug>
+description: Interactive course for "<book>". <N> chapters, <M> exercises.
+metadata:
+  type: project
+---
+
+# Course: <book title>
+
+- Skill: <skill-slug>
+- Chapters: <N>   - Exercises: <M>
+- Started: <YYYY-MM-DD>
+- Last updated: <YYYY-MM-DD>
+- Status: <in_progress|completed>
+
+## Chapters
+1. ⏳ ch01 — <title>  (artifacts/courses/<slug>/ch01.html)
+2. ▶  ch07 — <title>  (artifacts/courses/<slug>/ch07.html)
+
+## Practice
+- ch07-q1 ✅ graded: pass        # open tasks: set by `check`
+- ch07-open1 ⚠ graded: revisit   # the one thing to fix lands in ## Notes
+...
+
+## Notes
+- <fumbles, the single fix `check` surfaced, "go deeper" detours>
+```
+
+The `MEMORY.md` index line mirrors the walk form:
+`- [Course: <book>](course-<slug>.md) — <M> exercises, last touched <date>`.
+
+If a skill is re-backfilled and its `book_number` labels shift, the
+`course-<slug>.md` references and the `practice/<book_number>-*.json`
+filenames drift — run `book-to-skill/scripts/upgrade_course_memory.py`
+(sibling of `upgrade_walk_memory.py`) to repair them.
+
 ---
 
 ## Step 8 — Recap + follow-on (after the last step)

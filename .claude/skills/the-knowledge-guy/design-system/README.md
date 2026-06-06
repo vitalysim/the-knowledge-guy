@@ -6,7 +6,12 @@ is the single source of truth for what those artifacts look like.
 The chosen design system is **Knowledge Guide · Modern** — a
 technical-reader aesthetic built on Bricolage Grotesque + JetBrains
 Mono, a single cobalt accent (`#2742d3` light / `#6c89ff` dark), and
-24 named components for treating books as inspectable data.
+its named components for treating books as inspectable data. The
+original 24 static components are joined by an **interactive practice
+set** added for `course` mode: `.exercise`, `.options/.opt` (with
+`.correct`/`.incorrect`/`.chosen` states), `.ex-feedback`, `.runner`
+(code editor + sandboxed output + verdict), `.btn` variants,
+`.mastery` meter, and `.ex-badge`.
 
 ## Files in this directory
 
@@ -20,10 +25,16 @@ Mono, a single cobalt accent (`#2742d3` light / `#6c89ff` dark), and
   - A `[data-density="compact"]` variant.
   - A two-button toggle bar (top-right) wired with `localStorage` so
     the user's choice persists across artifacts.
+  - The **lab engine** — a guarded `<script>` that hydrates a
+    `#kg-exercises` JSON island into interactive practice (auto-checked
+    quizzes, runnable code labs in a sandboxed `<iframe>`, "check with
+    Claude" buttons) and persists progress to `localStorage`. It no-ops
+    on any page without the island, so it ships harmlessly everywhere.
 - **`layouts.md`** — one section per use case (nutshell, synthesis,
   walk-session, walk-recap, comparison, toolkit, glossary, cheatsheet,
-  concept-map, library). Each gives path, title, EXTRA_CSS (usually
-  empty), and the body skeleton built from `shell.html` components.
+  concept-map, library, **course-chapter, course-index**). Each gives
+  path, title, EXTRA_CSS (usually empty), and the body skeleton built
+  from `shell.html` components.
 - **`reference/full-demo-light.html`** /
   **`reference/full-demo-dark.html`** — the canonical demo of every
   component, in both themes. Open these in a browser when you need a
@@ -70,7 +81,13 @@ The rendering procedure is the same for every mode:
   directory — never per-artifact.
 - **Do not use frameworks** (Bootstrap, Tailwind, etc.) or external
   CSS files. Every artifact is self-contained — CSS inline, fonts via
-  the Google Fonts CDN.
+  the Google Fonts CDN. The **one** additional allowed CDN request is
+  **Pyodide**, lazy-loaded only when a Python lab is Run; it degrades to
+  "check with Claude" offline. JS labs need no network — prefer them.
+- **Do not render an open task's `rubric` or `model_answer`** into a
+  course page — they are the grading key and stay server-side (the
+  `check` sub-mode reads them in chat). The renderer whitelists fields
+  per exercise family before inlining the `#kg-exercises` island.
 - **Do not write HTML directly into `previews/`.** That directory is
   the design exploration archive. Live outputs go to `artifacts/`.
 - **Always update `artifacts/index.html`** after writing a new

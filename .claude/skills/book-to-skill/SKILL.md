@@ -70,10 +70,12 @@ crystallised frameworks, plus a concept map of how those frameworks connect.
 ## Architecture — a map-reduce pipeline
 
 ```
-Stage 0  EXTRACT   extract.py → text + images + per-chapter slices + offsets
-Pass 0   SPINE     fast read of ToC + intros → the book's thesis & framework list
-Stage 1  MAP       each chapter → one chapter file   (parallel subagents)
-Stage 2  REDUCE    all chapter files → concept map + topic index → SKILL.md
+Stage 0   EXTRACT   extract.py → text + images + per-chapter slices + offsets
+Pass 0    SPINE     fast read of ToC + intros → the book's thesis & framework list
+Stage 1   MAP       each chapter → one chapter file   (parallel subagents)
+Stage 2   REDUCE    all chapter files → concept map + topic index → SKILL.md
+Stage 2.5 NUTSHELL  each chapter file → one micro-summary block → nutshell.md
+Stage 3   PRACTICE  each chapter → one practice set (quizzes/labs/tasks)  (opt-in)
 ```
 
 Stage 1 maps over chapters; Stage 2 reduces over chapter *extractions*. Stage 2
@@ -265,9 +267,20 @@ From `metadata.json`, present an estimate **before generating anything**:
 
 📁 Will generate: SKILL.md + <chapter_count> chapter files + glossary + patterns + cheatsheet + nutshell + chapters_manifest.json
 ➡  Proceed with full conversion? (or say "analyze only" to preview first)
+
+🎓 Optional — interactive practice (Stage 3): add a per-chapter practice set
+   (auto-checked quizzes + in-browser code labs + open tasks) so the book can
+   be rendered as an interactive `/the-knowledge-guy course`. Best for technical
+   / textbook / vuln-hunting books. Adds ~1 subagent per eligible chapter
+   (≈ +<chapter_count × 1,400> output tokens). Say "with practice" to include it.
 ```
 
-Wait for confirmation. If the user says "analyze only", switch to Mode 2.
+Wait for confirmation. If the user says "analyze only", switch to Mode 2. If
+the user opts in with "with practice" (or the genre is technical / textbook /
+vuln-hunting and they accept the suggestion), set `WITH_PRACTICE=yes` and run
+**Step 8.6** after the nutshell. Otherwise skip Stage 3 — it is purely additive
+and can be run later by re-invoking with `--regenerate` once practice support
+is wanted.
 
 ## Step 5 — Pass 0: build the spine
 
@@ -551,6 +564,100 @@ twice, write a single-line stub for that chapter
 (`## <book_number> — <title>\n\n*Nutshell generation failed.*`) and
 continue — do not block the whole stage.
 
+## Step 8.6 — Stage 3: PRACTICE (per-chapter exercises) — opt-in
+
+**Run this only if `WITH_PRACTICE=yes`** (Step 4). It is purely additive:
+it produces a per-chapter practice set that `/the-knowledge-guy course`
+renders as an interactive learn-by-doing site (auto-checked quizzes,
+in-browser runnable code labs, open tasks). Skipping it changes nothing
+else; it can be added later by re-running with `--regenerate`.
+
+Like Stage 1, this is a **parallel per-chapter subagent fan-out**; like the
+nutshell, it maps over the **chapter toolkit files** (plus the raw slice),
+so cost scales with chapter count. The frozen output contract is
+`${BTS_DIR}/reference/practice-template.md` — read it first.
+
+### Prep (orchestrator, once)
+
+1. Read `${BTS_DIR}/reference/practice-template.md` (schema, the three
+   exercise families, the extract/generate/research decision tree, the lab
+   safety rails).
+2. Resolve the genre from `metadata.json` (normalize a stored menu-number
+   to a slug — `lint_practice.py:resolve_genre` has the mapping). Compute
+   `is_codey = genre in {technical, vuln-hunting, textbook, scientific, reference}`
+   and `is_cyber = genre == vuln-hunting` (or the spine vocabulary is
+   security-heavy). Stage 3 targets technical / textbook / vuln-hunting
+   first; other genres degrade to `auto` + `open` only.
+3. Resolve `<CHAPTERS_DIR>` exactly as Step 7 does (the dir named by
+   `metadata.json["chapters_source"]` — `chapters_split/` if a re-split
+   happened, else `raw_chapters/`). **Do not hardcode `raw_chapters/`.**
+4. `mkdir -p "${SKILL_DIR}/practice" "${SKILL_DIR}/raw/research"`.
+5. Eligible chapters = manifest entries **excluding** `book_number` starting
+   `fm`/`bm` and `word_count < 300` (same skip rule as the nutshell).
+6. **Resume (filesystem-driven):** a chapter is done iff
+   `practice/<book_number>-<slug>.json` exists, parses, and has ≥ 1
+   exercise. Skip those. (An empty/failed stub does **not** count — retry it.)
+
+### Fan-out (one subagent per remaining chapter, batched 5–8)
+
+Each subagent reads: the chapter toolkit `chapters/<book_number>-<slug>.md`
+(primary), the raw slice `<CHAPTERS_DIR>/<book_number>.txt`, `raw/spine.md`,
+the genre's profile block, `reference/practice-template.md`, and
+`raw/research/<book_number>.md` **if it already exists**. Its task prompt:
+
+```
+Generate a PRACTICE set for ONE chapter, following the frozen schema in
+practice-template.md (read it). Inputs (absolute paths substituted):
+  - Chapter toolkit:  <SKILL_DIR>/chapters/<book_number>-<slug>.md
+  - Raw chapter text: <CHAPTERS_DIR>/<book_number>.txt
+  - Spine:            <SKILL_DIR>/raw/spine.md
+  - Schema + genre profile: practice-template.md + the <genre> block (inline)
+  - Research cache (READ if it exists): <SKILL_DIR>/raw/research/<book_number>.md
+  - Web tools (ONLY if is_cyber/is_codey AND a realistic lab needs current
+    external detail AND no cache exists yet): WebSearch, WebFetch
+
+Steps:
+  1. Read the toolkit, then the raw slice. Decide extract-vs-generate
+     (does the raw text contain exercises? signals: "Exercise", "Problems",
+     "Lab", "Challenge", "Q1"…). Extract & complete the book's own where
+     present; otherwise generate from the toolkit's Frameworks / Anti-patterns
+     / Code Examples — every exercise's tests.framework MUST name a real one.
+  2. If web research is warranted and no cache exists: WebSearch/WebFetch,
+     then distil findings to <SKILL_DIR>/raw/research/<book_number>.md with
+     source URLs + today's date (one `date +%Y-%m-%d` call). If a cache
+     exists, READ it — do not search again.
+  3. Produce 4–8 exercises: ≥2 auto, ≥1 runnable (ONLY if a code example
+     exists; prefer runtime "js" so it runs offline), ≥1 open.
+     - For every runnable lab: write solution_code AND a deterministic
+       assert/stdout check, and TRACE the solution through the check to
+       confirm it passes and the starter fails. Pure functions only — no
+       I/O, network, clock, randomness (the lint will EXECUTE it).
+     - For every MCQ-shaped item: exactly ONE correct option; distractors
+       are plausible misconceptions, not nonsense.
+     - For every open task: include rubric + model_answer (server-side only).
+  4. Write <SKILL_DIR>/practice/<book_number>-<slug>.json (canonical) and a
+     <book_number>-<slug>.md mirror. Cite by book_number; preserve exact
+     framework names. A faithful 4-exercise set beats a padded 8.
+```
+
+A subagent that fails writes a stub `{"exercises": []}` (which resume will
+retry); never block the whole stage on one chapter.
+
+### Validate (orchestrator)
+
+Run the lint — it **executes** every runnable lab and hard-fails any whose
+model solution doesn't pass its own check:
+
+```bash
+${BTS_DIR}/.venv/bin/python ${BTS_DIR}/scripts/lint_practice.py "${SKILL_DIR}"
+```
+
+**Re-run any chapter the lint flags with a hard ERROR** (broken lab, bad
+MCQ, bad book_number) before declaring Stage 3 done. Warnings are advisory.
+Set `stage3_done: true` in `raw/progress.json` (log only). Stage 3 does
+**not** bump `chapters_manifest.json` — practice is discovered by file
+presence, and `schema_version` stays `2`.
+
 ## Step 9 — Write the master SKILL.md
 
 Using the template in `concept-map-spec.md`, write
@@ -605,6 +712,18 @@ test -f "${SKILL_DIR}/raw/full_text.txt"
 test -f "${SKILL_DIR}/raw/metadata.json"
 test -f "${SKILL_DIR}/raw/spine.md"
 ```
+
+If Stage 3 ran (`WITH_PRACTICE=yes`), validate the practice sets — the lint
+**executes** every runnable lab, so a green run proves every lab's solution
+passes its own check:
+
+```bash
+${BTS_DIR}/.venv/bin/python ${BTS_DIR}/scripts/lint_practice.py "${SKILL_DIR}"
+```
+
+Any hard ERROR means a broken practice file shipped — re-run that chapter's
+Stage 3 subagent before declaring done. (No practice/ dir is fine — it just
+means Stage 3 was skipped.)
 
 Then remove the staging directory only (the raw lives inside the skill now):
 

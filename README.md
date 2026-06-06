@@ -62,8 +62,8 @@ Every invocation also writes a self-contained HTML artifact to
 
 ### `/book-to-skill` — the ingest pipeline
 
-Map-reduce in five stages (see the hero diagram). What's worth
-knowing:
+Map-reduce in six stages (the sixth, **Stage 3 PRACTICE**, is opt-in —
+see the hero diagram). What's worth knowing:
 
 - **Two-tier output.** `SKILL.md` is always loaded;
   `chapters/<book_number>-<slug>.md` is paged in on demand. The
@@ -82,6 +82,12 @@ knowing:
 - **Seven genre profiles** (technical / vuln-hunting / financial /
   scientific / productivity / narrative non-fiction / general) tune
   chunk boundaries, the chapter schema, and the reduce emphasis.
+- **Stage 3 PRACTICE (opt-in)** turns each chapter into a practice set —
+  it extracts the book's own exercises, generates new ones, and for
+  cyber/technical chapters can web-research realistic labs. The output
+  (`practice/<book_number>-<slug>.json`) is what `/the-knowledge-guy
+  course` renders as an interactive learn-by-doing site. Best for
+  technical / textbook / vuln-hunting books.
 
 ### `/the-knowledge-guy` — the router + teacher
 
@@ -94,6 +100,8 @@ routing, every time.
 | ---- | ------------ | ------- |
 | **ask** | Cross-domain synthesis essay with inline citations | open-ended question |
 | **walk** | Interactive curriculum with quizzes, progress saved across sessions | `walk me through <topic>` |
+| **course** | Interactive learn-by-doing site per chapter — theory + auto-checked quizzes + in-browser code labs + open tasks graded by Claude | `course <book> [<chapter>]` |
+| **check** | Grade an open-ended practice answer against its rubric | `check <book> <ch> <id>` |
 | **nutshell** | Whole-book per-chapter skim (~100 words/chapter) | `nutshell <book>` |
 | **library** | Bookshelf overview | `library` |
 | **comparison** | One concept across multiple books, tagged agree / extend / tension | `compare <topic>` |
@@ -147,6 +155,13 @@ The design system lives at
   back to text-only (no figures).
 - Image-heavy books cost extra at extraction time — the pipeline
   reads every kept figure with a vision call.
+- **Course mode** needs a modern browser to open the generated pages.
+  Quizzes and JavaScript labs run fully offline; **Python** labs fetch
+  Pyodide from a CDN on first Run and fall back to "check with Claude"
+  when offline. Open-ended tasks are graded back in chat, not in the
+  page. Practice generation (Stage 3) is best on technical / textbook /
+  vuln-hunting books; narrative and finance books get quizzes and
+  reflection tasks rather than code labs.
 
 ## Design principles
 
@@ -166,16 +181,18 @@ the-knowledge-guy/
 ├── artifacts/                  ← every HTML output lands here
 └── .claude/skills/
     ├── book-to-skill/
-    │   ├── SKILL.md            ← pipeline runbook
-    │   ├── reference/          ← templates, genre profiles, concept-map spec
+    │   ├── SKILL.md            ← pipeline runbook (Stages 0-3)
+    │   ├── reference/          ← templates, genre profiles, concept-map spec,
+    │   │                         practice-template.md (the Stage-3 contract)
     │   └── scripts/            ← extract.py · detect_chapters.py · lint_chapters.py
-    │                             backfill_book_numbers.py · relabel_nutshell.py
-    │                             upgrade_walk_memory.py
+    │                             lint_practice.py · backfill_book_numbers.py
+    │                             relabel_nutshell.py · upgrade_walk_memory.py
+    │                             upgrade_course_memory.py
     ├── the-knowledge-guy/
-    │   ├── SKILL.md            ← mode dispatch + all modes
-    │   ├── walk-mode.md        ← interactive curriculum + quiz procedure
-    │   └── design-system/      ← shell.html · layouts.md · reference/
-    └── <book-derived skills>/  ← one per ingested book
+    │   ├── SKILL.md            ← mode dispatch + all modes (incl. course / check)
+    │   ├── walk-mode.md        ← interactive curriculum + quiz + course memory
+    │   └── design-system/      ← shell.html (+ lab engine) · layouts.md · reference/
+    └── <book-derived skills>/  ← one per ingested book (+ optional practice/)
 ```
 
 ## Install on your platform

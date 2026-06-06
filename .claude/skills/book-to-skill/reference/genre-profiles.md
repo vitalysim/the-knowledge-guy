@@ -33,6 +33,9 @@ General programming / engineering / architecture books.
 - **Reduce emphasis**: a dependency graph — which concepts build on which,
   and which trade-offs recur across chapters.
 - **Images**: keep diagrams and screenshots; they often *are* the content.
+- **Practice unit** (Stage 3): runnable labs (fix-the-bug / implement-the-pattern)
+  grounded in the chapter's Code Examples, plus predict-output and
+  trade-off MCQs. Prefer `runtime: "js"` so labs run offline.
 - **Don't pick this if…** the book is mostly *exploitation* (→ `vuln-hunting`),
   mostly *self-contained recipes* (→ `reference`), or has *exercises after
   each section* (→ `textbook`).
@@ -54,6 +57,11 @@ Offensive security, exploitation, bug-hunting, reverse-engineering books.
   exec). This is the highest-value reduce output of any genre.
 - **Images**: keep — call graphs, packet diagrams, and exploit-flow figures
   carry precise meaning. Reconstruct flow diagrams as text or mermaid.
+- **Practice unit** (Stage 3): spot-the-sink and patch-the-vuln drills; labs
+  that **model** a vulnerable parser / protocol handler as a pure function
+  (no live target, no real exploit); threat-model and repro-writeup open
+  tasks. The web-research hatch (cache to `raw/research/<book_number>.md`)
+  fires here most, to build realistic, current labs.
 - **Don't pick this if…** the book is *defensive* security / blue-team
   (use `technical`) or *general programming with security examples* (also
   `technical`).
@@ -138,6 +146,11 @@ Pedagogical course material with explicit prerequisites and exercises.
   prerequisites. Captures the path a learner must take. Pair with a separate
   `exercises.md` listing the worked examples by section so a learner can
   practise without re-reading.
+- **Practice unit** (Stage 3): prefer **extracting** the book's own exercises
+  and *completing* them with the answers / checks / rubrics the book omits;
+  `reorder-steps` and `fill-in-the-blank` shine for algorithm steps and
+  theorem conditions. This is where the `exercises.md` promised above is
+  finally realized — as structured, checkable practice JSON.
 - **Images**: keep diagrams and equation figures; reconstruct geometric /
   circuit / proof diagrams as text or mermaid.
 - **Don't pick this if…** there are *no exercises* (→ `scientific` or

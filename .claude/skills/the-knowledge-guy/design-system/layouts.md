@@ -704,6 +704,155 @@ edge list from the source skill's `SKILL.md` concept-map section.
 
 ---
 
+## 11 · Course chapter (interactive learn-by-doing)
+
+**Path:** `artifacts/courses/<skill-slug>/<book_number>.html` (cached;
+reuse unless `--regenerate`)
+
+**Title:** `Course · <book_number> — <chapter title> · <skill-slug>`
+
+**EXTRA_CSS:** *(none — every interactive component lives in `shell.html`:
+`.exercise`, `.options/.opt`, `.ex-feedback`, `.runner`, `.btn`,
+`.mastery`, `.ex-badge`. The lab-engine JS hydrates the `#kg-exercises`
+island automatically.)*
+
+This is the one interactive layout. The **theory** half is composed from
+the existing components (`.def`, `.worked`, `.code-block`, `.callout`,
+`.capsule`, `.source`) — same as the toolkit layout. The **practice**
+half is a single JSON island plus a mount div; the shell's lab engine
+builds the exercise UI, checks answers client-side, runs labs in a
+sandboxed iframe, and saves progress to `localStorage`.
+
+**Body skeleton:**
+
+```html
+<div class="wrap">
+
+  <span class="eyebrow"><span class="dot"></span>Course · {{skill-slug}} · {{book_number}}</span>
+  <h1>{{chapter title}}</h1>
+  <p class="lede">{{one paragraph: what you'll be able to DO after this chapter}}</p>
+
+  <div class="meta-bar">
+    <div class="cell"><span class="lbl">Chapter</span><span class="val">{{book_number}}</span></div>
+    <div class="cell"><span class="lbl">From</span><span class="val">{{skill-slug}}</span></div>
+    <div class="cell"><span class="lbl">Exercises</span><span class="val">{{N}}</span></div>
+    <div class="cell"><span class="lbl">Practice</span><span class="val">{{auto}}·{{lab}}·{{open}}</span></div>
+  </div>
+
+  <!-- THEORY — existing components only -->
+  <section class="sect" id="theory">
+    <div class="sect-head"><div class="left">
+      <span class="kicker">theory</span><h2>{{section title}}</h2></div></div>
+    {{teaching paragraphs — practitioner voice, taught from the chapter toolkit}}
+    {{.def for each framework · .worked for a worked example · .code-block for code
+      · .callout.insight / .callout.caution where useful · .capsule TL;DR at the end}}
+    <div class="source">…cite [skill-slug book_number]…</div>
+  </section>
+
+  <!-- PRACTICE — the lab engine mounts here -->
+  <section class="sect" id="practice">
+    <div class="sect-head">
+      <div class="left"><span class="kicker">practice</span><h2>Try it</h2></div>
+      <div class="right">progress saved in this browser</div>
+    </div>
+    <div class="mastery" data-scope="{{skill-slug}}/{{book_number}}">
+      <div class="mastery-track"><div class="mastery-fill"></div></div>
+      <div class="mastery-label"><span class="done">0</span>/{{N}} cleared</div>
+    </div>
+    <div id="kg-practice" data-scope="{{skill-slug}}/{{book_number}}"></div>
+  </section>
+
+  <!-- Exercise data island — SANITIZED per the field-visibility whitelist:
+       strip `rubric` and `model_answer` from every `open` exercise before
+       inlining. The browser never grades open tasks, so those fields would
+       only leak the answer key into page source. See
+       book-to-skill/reference/practice-template.md → "Field-visibility rule". -->
+  <script type="application/json" id="kg-exercises">{{sanitized exercises JSON array}}</script>
+
+</div>
+```
+
+Notes:
+- `data-scope` on **both** the `.mastery` meter and the `#kg-practice`
+  mount must be `<skill-slug>/<book_number>` and must match — the engine
+  keys `localStorage` on it.
+- Do **not** hand-author the exercise cards. Emit only the JSON island;
+  the lab engine renders every family (`auto` / `runnable` / `open`).
+- The `#kg-exercises` array is the chapter's `practice/<book_number>-<slug>.json`
+  `exercises` list, with `rubric`/`model_answer` removed from `open` items.
+
+---
+
+## 12 · Course index (syllabus)
+
+**Path:** `artifacts/courses/<skill-slug>/index.html` (always
+regenerated — cheap, and it reflects new chapter pages + progress)
+
+**Title:** `Course — <book title> · <skill-slug>`
+
+**EXTRA_CSS:**
+
+```css
+.syllabus { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin: 28px 0; }
+.syllabus a.source { display: block; text-decoration: none; border-bottom: 0; }
+.syllabus a.source:hover { border-color: var(--accent-border); }
+```
+
+**Body skeleton:**
+
+```html
+<div class="wrap">
+
+  <span class="eyebrow"><span class="dot"></span>Course · {{skill-slug}}</span>
+  <h1>{{book title}}</h1>
+  <p class="lede">{{lede: learn this book by doing — theory, then hands-on practice, chapter by chapter}}</p>
+
+  <div class="meta-bar">
+    <div class="cell"><span class="lbl">Chapters</span><span class="val">{{N}}</span></div>
+    <div class="cell"><span class="lbl">Exercises</span><span class="val">{{M}}</span></div>
+    <div class="cell"><span class="lbl">Labs</span><span class="val">{{L}}</span></div>
+    <div class="cell"><span class="lbl">Source</span><span class="val">{{author-lastname}}</span></div>
+  </div>
+
+  <!-- Course-level progress — painted from localStorage by the shell.
+       data-total = total exercises across all chapters in this course. -->
+  <div class="mastery" data-scope="{{skill-slug}}" data-total="{{M}}">
+    <div class="mastery-track"><div class="mastery-fill"></div></div>
+    <div class="mastery-label"><span class="done">0</span>/{{M}} cleared</div>
+  </div>
+
+  <!-- Syllabus in prerequisite (DAG) order; fall back to manifest index order -->
+  <div class="syllabus">
+    {{for each chapter:
+      <a class="source" href="{book_number}.html">
+        <div class="src-id">
+          <span class="id-pill">{book_number}</span>
+          <span class="id-dom">{exercise_count} exercises</span>
+          {{if has_lab: <span class="id-status">lab</span>}}
+        </div>
+        <div class="src-title">{chapter title}</div>
+        {{if prereqs: <div class="prereq"><span class="lbl">Prereqs</span>
+          <div class="list">{{for each prereq book_number: <span class="chip">{prereq}</span>}}</div></div>}}
+        <!-- per-chapter mini progress -->
+        <div class="mastery" data-scope="{skill-slug}/{book_number}" data-total="{exercise_count}" style="margin:12px 0 0">
+          <div class="mastery-track"><div class="mastery-fill"></div></div>
+          <div class="mastery-label"><span class="done">0</span>/{exercise_count} cleared</div>
+        </div>
+      </a>
+    }}
+  </div>
+
+</div>
+```
+
+Notes:
+- Every `.mastery` here carries `data-total` so the shell's standalone
+  painter fills it from `localStorage` (the per-chapter pages write it).
+- Chapters with no practice file render as a card with `0 exercises` and
+  a `.callout.caution` is unnecessary here — just omit the mini-meter.
+
+---
+
 ## Filename rules (single source of truth)
 
 | Use case | Path | Cacheable? |
@@ -719,6 +868,8 @@ edge list from the source skill's `SKILL.md` concept-map section.
 | Cheatsheet | `cheatsheets/<skill-slug>.html` | yes |
 | Concept map | `concept-maps/<skill-slug>.html` | yes |
 | Library | `library.html` (root of artifacts/) | yes |
+| Course chapter | `courses/<skill-slug>/<book_number>.html` | yes (reuse unless `--regenerate`) |
+| Course index | `courses/<skill-slug>/index.html` | always regenerated (cheap; reflects progress) |
 
 ## Index page
 
