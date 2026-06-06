@@ -31,8 +31,11 @@ tokens to consult instead of four hundred.
 every installed skill. It auto-discovers skills from the filesystem
 at every invocation, routes any question to every plausibly relevant
 book in parallel, and synthesises one answer with inline citations.
-It can also teach a topic step by step with quizzes and resumable
-progress.
+It can teach a topic step by step with quizzes and resumable progress
+— and it can turn a chapter into an interactive **learn-by-doing**
+website: theory with manipulable SVG illustrations, auto-checked
+quizzes, in-browser code labs, and open tasks it grades against a
+rubric.
 
 The architectural rule that holds it together: **plumbing in Python,
 intelligence in Claude.** `extract.py` does mechanical PDF → text +
@@ -51,12 +54,13 @@ below.
 /book-to-skill /path/to/book.pdf                                  # ingest
 /the-knowledge-guy what do my books say about margin of safety?   # ask
 /the-knowledge-guy walk me through Kerberos                       # tutor
+/the-knowledge-guy course <skill-slug>                            # learn by doing
 /the-knowledge-guy nutshell <skill-slug>                          # skim
 /the-knowledge-guy resume                                         # resume
 ```
 
 Every invocation also writes a self-contained HTML artifact to
-`artifacts/`.
+`artifacts/`. Course pages are interactive — they run in the browser.
 
 ## The system, in two pieces
 
@@ -118,6 +122,42 @@ per matched skill. Each subagent loads exactly one book and answers
 in 200-400 words with chapter citations. The orchestrator synthesises
 the reports into one unified essay.
 
+### Learn by doing — the `course` experience
+
+For technical, textbook, and vuln-hunting books, reading is only half
+of learning. `/the-knowledge-guy course <book>` renders an interactive
+website per chapter (plus a syllabus index) that teaches *and* makes you
+practice. The full loop, all in a self-contained HTML page that opens
+from disk:
+
+- **Theory** — the chapter taught in practitioner voice, composed from
+  the design-system components, optionally with an **interactive SVG
+  concept widget**: toggle a sanitizer and watch taint stop at it; drag a
+  write-length past a buffer's capacity and watch it turn critical; step a
+  pipeline; compare two approaches. Five widget types
+  (`flow`, `toggle-state`, `stepper`, `slider`, `compare`), all built from
+  the existing `.plate`/`.illus` classes so they invert in dark mode, with
+  motion gated behind `prefers-reduced-motion`. The teaching subagent adds
+  one only where a concept is genuinely structural — prose by default.
+- **Practice** — auto-checked quizzes (multiple-choice, predict-output,
+  fix-the-bug, fill-in-the-blank, reorder-steps, spot-the-anti-pattern)
+  with instant feedback; **in-browser runnable code labs** (JavaScript
+  natively; Python via Pyodide) that execute the learner's code in a
+  sandboxed iframe and run a deterministic check; and open-ended tasks.
+- **Grading + progress** — an open task's *"Check with Claude"* button
+  copies a `check …` command; paste it back and Claude grades it against
+  the task's rubric and records the result. Quiz/lab progress saves to the
+  browser's `localStorage`; a durable `course-<slug>.md` memory file is the
+  source of truth, and the index shows a mastery meter per chapter.
+
+The practice content comes from `book-to-skill`'s opt-in **Stage 3
+PRACTICE**, which extracts the book's own exercises, generates new ones,
+and can web-research realistic labs (`practice/<book_number>-<slug>.json`).
+Two lints guard it: `lint_practice.py` *executes* every lab to prove its
+solution passes and its starter fails, and `lint_concept_widgets.py`
+validates each widget's schema and rejects any bespoke SVG that hardcodes
+a color (the engine itself never sets one).
+
 ## Every output is also an HTML artifact
 
 Every invocation writes both text to chat *and* a self-contained HTML
@@ -134,16 +174,20 @@ artifacts/
 ├── synthesis/YYYY-MM-DD-<query-slug>.html  ← dated, never reused
 ├── walks/<topic>-step-<N>.html             ← overwritten per step
 ├── walks/<topic>-recap.html                ← durable
+├── courses/<book-slug>/index.html          ← syllabus, regenerated
+├── courses/<book-slug>/<book_number>.html  ← interactive lesson, cached
 └── comparisons/  toolkits/  cheatsheets/
     concept-maps/  glossaries/              ← cached per slug
 ```
 
 Deterministic outputs (nutshell, toolkit, cheatsheet, concept-map,
-per-book glossary, library) are cached and reused; non-deterministic
-ones (synthesis, comparison, walk-recap) accumulate as dated files.
-The design system lives at
+per-book glossary, library, course lessons) are cached and reused;
+non-deterministic ones (synthesis, comparison, walk-recap) accumulate as
+dated files. The design system lives at
 [`.claude/skills/the-knowledge-guy/design-system/`](./.claude/skills/the-knowledge-guy/design-system/)
-— `shell.html`, `layouts.md`, and a full visual contract at
+— `shell.html` (which carries the static CSS plus two guarded engines: the
+practice **lab engine** and the **concept-widget engine**), `layouts.md`,
+`widgets.md` (the widget schema), and a full visual contract at
 `reference/full-demo-light.html`.
 
 ## Honest limitations
@@ -185,13 +229,14 @@ the-knowledge-guy/
     │   ├── reference/          ← templates, genre profiles, concept-map spec,
     │   │                         practice-template.md (the Stage-3 contract)
     │   └── scripts/            ← extract.py · detect_chapters.py · lint_chapters.py
-    │                             lint_practice.py · backfill_book_numbers.py
-    │                             relabel_nutshell.py · upgrade_walk_memory.py
-    │                             upgrade_course_memory.py
+    │                             lint_practice.py · lint_concept_widgets.py
+    │                             backfill_book_numbers.py · relabel_nutshell.py
+    │                             upgrade_walk_memory.py · upgrade_course_memory.py
     ├── the-knowledge-guy/
-    │   ├── SKILL.md            ← mode dispatch + all modes (incl. course / check)
+    │   ├── SKILL.md            ← mode dispatch + all 13 modes (incl. course / check)
     │   ├── walk-mode.md        ← interactive curriculum + quiz + course memory
-    │   └── design-system/      ← shell.html (+ lab engine) · layouts.md · reference/
+    │   └── design-system/      ← shell.html (+ lab & widget engines) · layouts.md
+    │                             widgets.md · reference/
     └── <book-derived skills>/  ← one per ingested book (+ optional practice/)
 ```
 
@@ -337,12 +382,14 @@ in API costs depending on model.
 
 ## Upgrading legacy skills
 
-Three idempotent helper scripts handle older skills:
+Four idempotent helper scripts handle older skills:
 `backfill_book_numbers.py` populates `book_number` and renames
 chapter files, `relabel_nutshell.py` fixes cached nutshell headings
 after backfill, `upgrade_walk_memory.py` rewrites stale
-`<slug>/chNN` shorthand inside walk memory. All three are no-ops on
-already-current skills.
+`<slug>/chNN` shorthand inside walk memory, and
+`upgrade_course_memory.py` repairs `book_number` drift in any
+`practice/*.json` files and `course-<slug>.md` memory after a
+re-backfill. All four are no-ops on already-current skills.
 
 ## Contributing
 
@@ -361,6 +408,13 @@ rest of the docs are derived from them.
   `design-system/reference/full-demo-light.html`, and reference it
   from any layout that uses it. Don't introduce a second accent
   colour — cobalt is load-bearing.
+- **A new practice exercise type or concept-widget type** — extend the
+  frozen contract (`book-to-skill/reference/practice-template.md` for
+  exercises, `the-knowledge-guy/design-system/widgets.md` for widgets),
+  add the renderer branch to the matching engine in
+  `design-system/shell.html`, and teach the lint
+  (`lint_practice.py` / `lint_concept_widgets.py`) to validate it. Widgets
+  must stay theme-safe — class swaps only, never a `fill`/`stroke`.
 - **A new genre profile for `book-to-skill`** — extend
   `book-to-skill/reference/genre-profiles.md`. Genres tune chunk
   boundaries, the chapter schema, and the reduce emphasis.
@@ -395,6 +449,12 @@ rest of the docs are derived from them.
 - If you touched a layout, regenerate one cached artifact (e.g.
   `/the-knowledge-guy nutshell <slug> --regenerate`) and open it in
   both light and dark themes.
+- If you touched the practice schema, an exercise renderer, or a lab,
+  run `book-to-skill/scripts/lint_practice.py <skill-dir>` — it executes
+  every lab to prove its solution passes and its starter fails.
+- If you touched the widget schema, the widget engine, or a course page,
+  run `book-to-skill/scripts/lint_concept_widgets.py --page <course.html>`
+  and open the page in both themes (and with reduced motion).
 
 **Issues**
 

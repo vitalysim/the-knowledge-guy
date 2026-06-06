@@ -87,11 +87,15 @@ density toggle persisted in `localStorage`. Three files there:
 
 - `shell.html` — the wrapper. Placeholders `{{TITLE}}`,
   `{{EXTRA_CSS}}`, `{{BODY}}`. Read it, substitute, write. It also
-  carries the **lab engine** — a guarded `<script>` that hydrates a
-  `#kg-exercises` JSON island into interactive practice (auto-checked
-  quizzes, runnable code labs in a sandboxed `<iframe>`, "check with
-  Claude" buttons) and saves progress to `localStorage`. No-ops on any
-  page without the island, so it ships harmlessly in every artifact.
+  carries two guarded engines that no-op on any page without their JSON
+  island, so they ship harmlessly in every artifact: the **lab engine**
+  (`#kg-exercises` → auto-checked quizzes, sandboxed-iframe code labs,
+  "check with Claude" buttons, progress in `localStorage`) and the
+  **concept-widget engine** (`#kg-concept-widgets` → interactive theory
+  SVG illustrations built from the `.plate`/`.illus` classes; it only ever
+  swaps classes, never a `fill`/`stroke`, so it is theme-safe; state is
+  ephemeral). Widget motion is the system's only animation, gated behind
+  `prefers-reduced-motion`. Schema: `design-system/widgets.md`.
 - `layouts.md` — one section per use case (nutshell / synthesis /
   walk-session / walk-recap / comparison / toolkit / glossary /
   cheatsheet / concept-map / library / **course-chapter / course-index**).
@@ -143,6 +147,11 @@ are idempotent.
 # bad MCQs, book_number mismatches. Run after Stage 3 / before shipping.
 ./book-to-skill/.venv/bin/python ./book-to-skill/scripts/lint_practice.py <skill-dir>
 
+# Validate course-lesson concept widgets (the 5-type schema in widgets.md) and
+# the theme-safety of bespoke static SVG (no hardcoded colors). --check-stdin
+# gates one spec at render time; --page / <dir> audits rendered course pages.
+./book-to-skill/.venv/bin/python ./book-to-skill/scripts/lint_concept_widgets.py --page <course-page.html>
+
 # Repair book_number drift in practice/*.json + course-*.md after a re-backfill
 # (sibling of upgrade_walk_memory.py; joins practice→manifest by chapter title).
 ./book-to-skill/scripts/upgrade_course_memory.py [memory-dir] [--dry-run]
@@ -180,6 +189,7 @@ Claude Code's skill runtime; do not try to call them from bash.
 | Per-chapter nutshell shape + numbering rule | `book-to-skill/reference/nutshell-template.md` |
 | Genre-specific extraction profiles | `book-to-skill/reference/genre-profiles.md` |
 | Stage-3 practice file shape (the frozen contract) | `book-to-skill/reference/practice-template.md` |
+| Course-lesson concept-widget schema (the 5 types) | `the-knowledge-guy/design-system/widgets.md` |
 | Routing, ask synthesis, and the 13 modes (incl. `course` / `check`) | `the-knowledge-guy/SKILL.md` |
 | Walk mode procedure + course/check memory grammar | `the-knowledge-guy/walk-mode.md` |
 | Worked walk transcripts | `the-knowledge-guy/examples.md` |
@@ -303,3 +313,11 @@ way to `course-<skill-slug>.md` (identical walk grammar — see
   a hard error, not a warning.
 - Do not inline Pyodide into artifacts (it's ~10 MB). Lazy-load it from
   CDN on first Python Run and degrade to "check with Claude" offline.
+- Do not let a concept widget (or bespoke theory SVG) set a `fill` /
+  `stroke` / `style` color — only `.plate`/`.illus` classes + CSS vars, so
+  themes invert. The widget engine enforces this for generated SVG;
+  `lint_concept_widgets.py` enforces it for bespoke SVG. Run it before
+  shipping a course page with a widget or illustration.
+- Do not persist concept-widget state. Widgets are exploration, not graded
+  mastery; persisting would corrupt the `kg-lab-progress-v1` mastery math
+  and break page reproducibility. They reset to authored defaults on load.

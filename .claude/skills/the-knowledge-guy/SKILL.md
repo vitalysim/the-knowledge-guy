@@ -535,11 +535,51 @@ For each chapter in the sequence (or the one requested):
    components (`.def`, `.worked`, `.code-block`, `.callout`, `.capsule`,
    `.source`). Fan these out in parallel across uncached chapters (batch ~6).
 
+   **Append this concept-visual clause to the teaching prompt** (course mode
+   only — chat walks never get it):
+
+   > *Only where it genuinely earns its place — the same bar as deciding a
+   > chapter gets a runnable lab — you MAY additionally return up to ONE
+   > interactive widget and/or ONE static illustration. Default to prose; never
+   > illustrate a definition a sentence already nails.*
+   > - **Widget**: a fenced ` ```json ` block tagged `widget` containing ONE
+   >   object that validates against `design-system/widgets.md` — `type` ∈
+   >   `flow | toggle-state | stepper | slider | compare`, fixed
+   >   `viewBox 0 0 640 280`, coordinates in range, edges referencing real node
+   >   ids, `surface:"plate"` for neutral structure or `"illus"` for anything
+   >   showing ok/warn/crit state. **JSON only — do not draw SVG for a widget;
+   >   the engine draws it.**
+   > - **Static SVG**: a fenced ` ```html ` block tagged `illus` — an inline
+   >   `<svg class="illus" viewBox="…">` or `<div class="plate">…</div>`, for a
+   >   structural diagram no widget covers. Use **only** design-system classes
+   >   (`il-*` / `node-*` / `edge-*` / `arrow*`) — never `fill="#…"`,
+   >   `stroke="#…"`, `style` color, `<script>`, or animation.
+
+4. **Collect + gate the visuals.** From each chapter's teaching output, take at
+   most one `widget` block and one `illus` block (discard extras). Pipe each
+   through the lint and **drop anything that fails** — never ship a malformed
+   widget or a hardcoded-color SVG:
+
+   ```bash
+   echo "$WIDGET_JSON" | ${BTS_DIR}/.venv/bin/python ${BTS_DIR}/scripts/lint_concept_widgets.py --check-stdin
+   echo "$STATIC_SVG"  | ${BTS_DIR}/.venv/bin/python ${BTS_DIR}/scripts/lint_concept_widgets.py --check-stdin
+   ```
+
 ### Step C4 — Render each chapter page (layout 11)
 
 Follow **Step 0.5** with `design-system/layouts.md` **§11 · Course chapter**:
 - Compose the body: chrome → theory section → practice section + the
   `#kg-practice` mount + the `#kg-exercises` JSON island.
+- **Theory visuals (if Step C3.4 kept any):** drop the static `illus`/`plate`
+  SVG verbatim into a `<div id="theory-illustration">` inside the theory
+  section (after the worked example). For the widget, emit an **empty**
+  `<figure class="widget" data-widget-id="<widget.id>"></figure>` mount where it
+  belongs in the flow, and add the widget object to a single
+  `<script type="application/json" id="kg-concept-widgets">[…]</script>` island
+  at the end of the body — escaped exactly like `#kg-exercises` below (replace
+  `<` with `<`). The shell's widget engine hydrates the mount; you do
+  **not** hand-author the SVG. Widget state is intentionally ephemeral (not
+  saved). Omit the island entirely when the page has no widget.
 - **Sanitize the island** (the one security-critical step): inline the
   practice file's `exercises` array, but for every exercise with
   `"family": "open"`, **remove `rubric` and `model_answer`** — they are the

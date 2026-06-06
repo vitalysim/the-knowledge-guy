@@ -1883,6 +1883,68 @@ color-scheme: light dark;
 
 
 /* ════════════════════════════════════════════════════════════════════
+   CONCEPT WIDGETS (added by the-knowledge-guy `course` mode)
+   Chrome for the interactive theory illustrations. The widget engine
+   injects a .plate or svg.illus inside .widget-stage and only ever swaps
+   .plate/.illus classes — it never sets a fill/stroke. No new hue: the
+   card is surface/border; controls reuse .btn/.btn.ghost; active states
+   reuse --accent*; danger reuses the existing .il-node-crit etc.
+   ════════════════════════════════════════════════════════════════════ */
+.widget {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  margin: 18px 0;
+  padding: 0;
+  overflow: hidden;
+}
+.widget-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 16px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.widget-head .widget-title { color: var(--text-dim); }
+.widget-head .widget-kind  { color: var(--accent-text); }
+.widget-stage { padding: 14px 16px 4px; }
+.widget-stage .plate { margin: 0; border: 0; border-radius: var(--r-sm); }
+.widget-stage svg.illus { margin: 0; }
+.widget-caption {
+  padding: 6px 16px 12px;
+  font-size: 12.5px; color: var(--text-muted); font-style: italic;
+  min-height: 1.5em;
+}
+.widget-controls {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  padding: 0 16px 14px;
+}
+.widget-controls .widget-step { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); }
+.widget-controls .widget-readout { font-family: var(--font-mono); font-size: 12.5px; color: var(--accent-text); min-width: 64px; }
+.widget-controls input[type="range"] { flex: 1; min-width: 140px; accent-color: var(--accent); }
+.widget-toggle[aria-checked="true"] {
+  border-color: var(--accent); color: var(--accent-text); background: var(--accent-bg);
+}
+.widget svg .panel-btn { cursor: pointer; }
+.widget svg .panel-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* MOTION — the system's first @keyframes + first prefers-reduced-motion
+   guard, scoped to .widget svg so it can never touch anything else.
+   Reduced-motion users get instant state changes (the rules don't apply). */
+@media (prefers-reduced-motion: no-preference) {
+  .widget svg rect,
+  .widget svg path,
+  .widget svg text {
+    transition: fill .25s ease, stroke .25s ease, stroke-width .2s ease,
+                width .2s ease, x .2s ease, opacity .2s ease;
+  }
+  @keyframes kgw-pulse { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.4; } }
+  .widget svg .kgw-playing { animation: kgw-pulse 1s ease-in-out infinite; }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════
    PER-USE-CASE EXTRA CSS (filled by each artifact)
    ════════════════════════════════════════════════════════════════════ */
 {{EXTRA_CSS}}
@@ -2249,6 +2311,279 @@ color-scheme: light dark;
     mount.appendChild(el);
   });
   paintMastery();
+})();
+</script>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     CONCEPT WIDGET ENGINE (added by the-knowledge-guy `course` mode)
+     Hydrates a #kg-concept-widgets JSON island into interactive theory
+     illustrations. No-ops on every page without the island. Theme-safe by
+     construction: it ONLY swaps .plate/.illus classes — never a fill/stroke.
+     State is ephemeral (exploration, not graded). Self-contained / file://.
+     ════════════════════════════════════════════════════════════════════ -->
+<script>
+(() => {
+  const island = document.getElementById('kg-concept-widgets');
+  if (!island) return;
+  const mounts = document.querySelectorAll('[data-widget-id]');
+  if (!mounts.length) return;
+  let specs;
+  try { specs = JSON.parse(island.textContent); } catch (e) { return; }
+  const byId = {};
+  (Array.isArray(specs) ? specs : []).forEach(w => { if (w && w.id) byId[w.id] = w; });
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const SEMANTIC = ['ok', 'warn', 'crit', 'ins'];
+  const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const NODE_CLASS = {
+    plate: { normal: 'node-bg', accent: 'node-accent', muted: 'node-bg-2' },
+    illus: { normal: 'il-node', accent: 'il-node-acc', muted: 'il-node',
+             ok: 'il-node-ok', warn: 'il-node-warn', crit: 'il-node-crit', ins: 'il-node-ins' },
+  };
+  const NODE_VARIANTS = {
+    plate: ['node-bg', 'node-bg-2', 'node-accent'],
+    illus: ['il-node', 'il-node-acc', 'il-node-ok', 'il-node-warn', 'il-node-crit', 'il-node-ins'],
+  };
+  const EDGE_CLASS = { plate: { normal: 'edge', emph: 'edge-emph' }, illus: { normal: 'il-edge', emph: 'il-edge-emph' } };
+  const EDGE_VARIANTS = { plate: ['edge', 'edge-emph'], illus: ['il-edge', 'il-edge-emph'] };
+
+  const el = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in (attrs || {})) e.setAttribute(k, attrs[k]); return e; };
+  const txt = (s) => document.createTextNode(s == null ? '' : String(s));
+
+  function applyNodeClass(rect, surface, kind) {
+    const cls = NODE_CLASS[surface][kind] || NODE_CLASS[surface].normal;
+    rect.classList.remove.apply(rect.classList, NODE_VARIANTS[surface]);
+    rect.classList.add(cls);
+  }
+  function applyEdgeClass(path, surface, state, markers) {
+    const cls = EDGE_CLASS[surface][state] || EDGE_CLASS[surface].normal;
+    path.classList.remove.apply(path.classList, EDGE_VARIANTS[surface]);
+    path.classList.add(cls);
+    path.setAttribute('marker-end', 'url(#' + (state === 'emph' ? markers.emph : markers.base) + ')');
+  }
+
+  function makeArrowDefs(svg, surface, idBase) {
+    const defs = el('defs');
+    const mk = (id, cls) => {
+      const m = el('marker', { id: id, viewBox: '0 0 10 10', refX: '8', refY: '5', markerWidth: '7', markerHeight: '7', orient: 'auto-start-reverse' });
+      m.appendChild(el('path', { d: 'M0,0 L10,5 L0,10 z', class: cls }));
+      return m;
+    };
+    const base = idBase + '-arr', emph = idBase + '-arr-emph';
+    defs.appendChild(mk(base, surface === 'plate' ? 'arrow' : 'il-arrow'));
+    defs.appendChild(mk(emph, surface === 'plate' ? 'arrow-emph' : 'il-arrow-emph'));
+    svg.appendChild(defs);
+    return { base: base, emph: emph };
+  }
+
+  function makeNode(n, surface) {
+    const w = n.w || 120, h = n.h || 52;
+    const g = el('g', { transform: 'translate(' + n.x + ' ' + n.y + ')' });
+    const rect = el('rect', { x: -w / 2, y: -h / 2, width: w, height: h, rx: 7 });
+    applyNodeClass(rect, surface, n.kind || 'normal');
+    g.appendChild(rect);
+    if (n.label) { const t = el('text', { x: 0, y: n.sub ? -3 : 5, class: surface === 'plate' ? 'node-label' : 'il-label' }); t.appendChild(txt(n.label)); g.appendChild(t); }
+    if (n.sub)   { const s = el('text', { x: 0, y: 15, class: surface === 'plate' ? 'node-sub' : 'il-sub' }); s.appendChild(txt(n.sub)); g.appendChild(s); }
+    return { g: g, rect: rect, node: n };
+  }
+
+  function makeEdge(e, nodeMap, surface, markers) {
+    const a = nodeMap[e.from].node, b = nodeMap[e.to].node;
+    const aw = (a.w || 120) / 2, bw = (b.w || 120) / 2;
+    const x1 = a.x + aw, y1 = a.y, x2 = b.x - bw, y2 = b.y, mx = (x1 + x2) / 2;
+    const d = (y1 === y2) ? ('M ' + x1 + ' ' + y1 + ' L ' + x2 + ' ' + y2)
+                          : ('M ' + x1 + ' ' + y1 + ' L ' + mx + ' ' + y1 + ' L ' + mx + ' ' + y2 + ' L ' + x2 + ' ' + y2);
+    const path = el('path', { d: d, fill: 'none' });
+    applyEdgeClass(path, surface, e.emph ? 'emph' : 'normal', markers);
+    let label = null;
+    if (e.label) {
+      const lx = mx, ly = y1, tw = e.label.length * 6.3 + 12;
+      const bg = el('rect', { class: surface === 'plate' ? 'edge-label-bg' : 'il-pill-bg', x: lx - tw / 2, y: ly - 9, width: tw, height: 16, rx: 3 });
+      const t = el('text', { x: lx, y: ly + 3, class: surface === 'plate' ? 'edge-label' : 'il-pill-text' }); t.appendChild(txt(e.label));
+      label = { bg: bg, t: t };
+    }
+    return { path: path, edge: e, label: label };
+  }
+
+  function buildChrome(w, mount) {
+    mount.classList.add('widget');
+    mount.setAttribute('role', 'group');
+    mount.setAttribute('aria-label', w.title || 'concept widget');
+    mount.textContent = '';
+    const head = document.createElement('div'); head.className = 'widget-head';
+    head.innerHTML = '<span class="widget-title">' + esc((w.title || '').toUpperCase()) + '</span><span class="widget-kind">' + esc(w.type) + '</span>';
+    const stage = document.createElement('div'); stage.className = 'widget-stage';
+    const cap = document.createElement('div'); cap.className = 'widget-caption'; cap.setAttribute('aria-live', 'polite'); cap.textContent = w.caption || '';
+    const controls = document.createElement('div'); controls.className = 'widget-controls';
+    mount.appendChild(head); mount.appendChild(stage); mount.appendChild(cap); mount.appendChild(controls);
+    return { stage: stage, cap: cap, controls: controls };
+  }
+
+  function buildSvg(w, stage) {
+    const svg = el('svg', { viewBox: '0 0 640 280', role: 'img', preserveAspectRatio: 'xMidYMid meet' });
+    const title = el('title'); title.appendChild(txt(w.title || '')); svg.appendChild(title);
+    const desc = el('desc'); desc.appendChild(txt(w.caption || w.title || '')); svg.appendChild(desc);
+    if (w.surface === 'illus') { svg.setAttribute('class', 'illus'); stage.appendChild(svg); }
+    else {
+      const plate = document.createElement('div'); plate.className = 'plate';
+      const body = document.createElement('div'); body.className = 'plate-body';
+      body.appendChild(svg); plate.appendChild(body); stage.appendChild(plate);
+    }
+    return svg;
+  }
+
+  function drawGraph(svg, w) {
+    const markers = makeArrowDefs(svg, w.surface, w.id);
+    const nodeMap = {}; (w.nodes || []).forEach(n => { nodeMap[n.id] = makeNode(n, w.surface); });
+    const edgeMap = {};
+    (w.edges || []).forEach(e => {
+      if (!nodeMap[e.from] || !nodeMap[e.to]) return;
+      const em = makeEdge(e, nodeMap, w.surface, markers);
+      edgeMap[e.id] = em;
+      svg.appendChild(em.path);
+      if (em.label) { svg.appendChild(em.label.bg); svg.appendChild(em.label.t); }
+    });
+    (w.nodes || []).forEach(n => svg.appendChild(nodeMap[n.id].g));
+    return { nodeMap: nodeMap, edgeMap: edgeMap, markers: markers };
+  }
+
+  function btn(label, act) { const b = document.createElement('button'); b.className = 'btn ghost'; b.type = 'button'; b.dataset.act = act; b.textContent = label; return b; }
+
+  // ---- flow / stepper ----
+  function renderFlowLike(w, mount, withPlay) {
+    const c = buildChrome(w, mount), svg = buildSvg(w, c.stage), g = drawGraph(svg, w);
+    const steps = w.steps || []; let cur = 0; let playing = false;
+    const prevB = btn('‹ Prev', 'prev'), stepL = document.createElement('span'); stepL.className = 'widget-step';
+    const nextB = btn('Next ›', 'next');
+    function applyStep(i) {
+      const st = steps[i] || { active: [], activeEdges: [], caption: '' };
+      const active = new Set(st.active || []), activeE = new Set(st.activeEdges || []);
+      (w.nodes || []).forEach(n => {
+        const nm = g.nodeMap[n.id]; if (!nm) return;
+        const base = n.kind || 'normal', sem = SEMANTIC.indexOf(base) >= 0, on = active.has(n.id);
+        applyNodeClass(nm.rect, w.surface, on ? (sem ? base : 'accent') : (sem ? 'normal' : base));
+      });
+      (w.edges || []).forEach(e => {
+        const em = g.edgeMap[e.id]; if (!em) return;
+        const on = activeE.has(e.id);
+        applyEdgeClass(em.path, w.surface, on ? 'emph' : (e.emph ? 'emph' : 'normal'), g.markers);
+        em.path.classList.toggle('kgw-playing', on && playing);
+      });
+      c.cap.textContent = st.caption || w.caption || '';
+      stepL.textContent = (i + 1) + ' / ' + steps.length;
+      prevB.disabled = i <= 0; nextB.disabled = i >= steps.length - 1;
+    }
+    prevB.addEventListener('click', () => { if (cur > 0) { cur--; applyStep(cur); } });
+    nextB.addEventListener('click', () => { if (cur < steps.length - 1) { cur++; applyStep(cur); } });
+    c.controls.appendChild(prevB); c.controls.appendChild(stepL); c.controls.appendChild(nextB);
+    if (withPlay) {
+      const playB = btn('▶ Play', 'play'); c.controls.appendChild(playB);
+      playB.addEventListener('click', () => {
+        if (reduce) { cur = steps.length - 1; applyStep(cur); return; }
+        playing = true; playB.disabled = true; cur = 0; applyStep(0);
+        const tick = () => { cur++; if (cur < steps.length) { applyStep(cur); setTimeout(tick, 1100); } else { playing = false; applyStep(cur = steps.length - 1); playB.disabled = false; } };
+        setTimeout(tick, 1100);
+      });
+    }
+    applyStep(0);
+  }
+
+  // ---- toggle-state ----
+  function renderToggle(w, mount) {
+    const c = buildChrome(w, mount), svg = buildSvg(w, c.stage), g = drawGraph(svg, w);
+    const toggles = w.toggles || [], state = toggles.map(t => !!t.default);
+    function apply() {
+      (w.nodes || []).forEach(n => { const nm = g.nodeMap[n.id]; if (nm) applyNodeClass(nm.rect, w.surface, n.kind || 'normal'); });
+      (w.edges || []).forEach(e => { const em = g.edgeMap[e.id]; if (em) applyEdgeClass(em.path, w.surface, e.emph ? 'emph' : 'normal', g.markers); });
+      let cap = w.caption || '';
+      toggles.forEach((t, i) => {
+        const br = state[i] ? t.on : t.off; if (!br) return;
+        const nc = br.nodeClass || {}; for (const id in nc) { const nm = g.nodeMap[id]; if (nm) applyNodeClass(nm.rect, w.surface, nc[id]); }
+        const ec = br.edgeClass || {}; for (const id in ec) { const em = g.edgeMap[id]; if (em) applyEdgeClass(em.path, w.surface, ec[id], g.markers); }
+        if (br.caption) cap = br.caption;
+      });
+      c.cap.textContent = cap;
+    }
+    toggles.forEach((t, i) => {
+      const b = document.createElement('button'); b.className = 'btn ghost widget-toggle'; b.type = 'button';
+      b.setAttribute('role', 'switch'); b.setAttribute('aria-checked', String(state[i])); b.textContent = t.label || ('Toggle ' + (i + 1));
+      b.addEventListener('click', () => { state[i] = !state[i]; b.setAttribute('aria-checked', String(state[i])); apply(); });
+      c.controls.appendChild(b);
+    });
+    apply();
+  }
+
+  // ---- slider ----
+  function renderSlider(w, mount) {
+    const c = buildChrome(w, mount), svg = buildSvg(w, c.stage), g = drawGraph(svg, w);
+    const cfg = w.slider || {}, vis = w.visual || {};
+    const capNode = (w.nodes || []).find(n => n.id === vis.capacityNode);
+    const fillNm = g.nodeMap[vis.fillNode];
+    if (fillNm) svg.appendChild(fillNm.g); // keep the fill on top of the capacity bar
+    const min = +cfg.min || 0, max = (cfg.max != null ? +cfg.max : 100), thr = (cfg.threshold != null ? +cfg.threshold : max);
+    const capW = (capNode && capNode.w) || 480, capLeft = (capNode ? capNode.x : 320) - capW / 2;
+    const fillH = (fillNm && fillNm.node.h) || 40, fillY = (fillNm ? fillNm.node.y : 150) - fillH / 2;
+    function apply(val) {
+      const frac = Math.max(0, Math.min(1, (val - min) / ((max - min) || 1)));
+      if (fillNm) {
+        fillNm.g.setAttribute('transform', 'translate(0 0)');
+        fillNm.rect.setAttribute('x', capLeft); fillNm.rect.setAttribute('y', fillY);
+        fillNm.rect.setAttribute('width', Math.max(2, frac * capW)); fillNm.rect.setAttribute('height', fillH);
+        applyNodeClass(fillNm.rect, 'illus', val >= thr ? 'crit' : 'normal');
+      }
+      readout.textContent = val + ' ' + (cfg.unit || '');
+      c.cap.textContent = (val >= thr ? (w.atOrAbove && w.atOrAbove.caption) : (w.below && w.below.caption)) || w.caption || '';
+    }
+    const lab = document.createElement('span'); lab.className = 'widget-step'; lab.textContent = cfg.label || '';
+    const range = document.createElement('input'); range.type = 'range';
+    range.min = min; range.max = max; range.step = cfg.step || 1; range.value = (cfg.default != null ? cfg.default : min);
+    range.setAttribute('aria-label', cfg.label || 'value');
+    const readout = document.createElement('span'); readout.className = 'widget-readout';
+    range.addEventListener('input', () => apply(+range.value));
+    c.controls.appendChild(lab); c.controls.appendChild(range); c.controls.appendChild(readout);
+    apply(+range.value);
+  }
+
+  // ---- compare ----
+  function renderCompare(w, mount) {
+    const c = buildChrome(w, mount), svg = buildSvg(w, c.stage);
+    const panels = w.panels || [], groups = {};
+    panels.forEach(p => {
+      const pw = p.w || 260, ph = p.h || 120;
+      const grp = el('g', { transform: 'translate(' + p.x + ' ' + p.y + ')', tabindex: '0', role: 'button', class: 'panel-btn' });
+      grp.setAttribute('aria-label', (p.label || '') + ': ' + (p.detail || ''));
+      const rect = el('rect', { x: -pw / 2, y: -ph / 2, width: pw, height: ph, rx: 8 });
+      applyNodeClass(rect, w.surface, 'normal'); grp.appendChild(rect);
+      const t = el('text', { x: 0, y: -4, class: w.surface === 'plate' ? 'node-label' : 'il-label' }); t.appendChild(txt(p.label)); grp.appendChild(t);
+      if (p.sub) { const s = el('text', { x: 0, y: 15, class: w.surface === 'plate' ? 'node-sub' : 'il-sub' }); s.appendChild(txt(p.sub)); grp.appendChild(s); }
+      svg.appendChild(grp); groups[p.id] = { g: grp, rect: rect };
+      const select = () => { panels.forEach(q => applyNodeClass(groups[q.id].rect, w.surface, q.id === p.id ? 'accent' : 'normal')); c.cap.textContent = p.detail || w.caption || ''; };
+      grp.addEventListener('click', select);
+      grp.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); select(); } });
+    });
+    c.cap.textContent = w.caption || '';
+  }
+
+  function renderUnsupported(w, mount) {
+    mount.classList.add('widget');
+    mount.innerHTML = '<div class="ex-feedback crit" style="margin:0"><span class="fb-lbl">Widget</span>Unsupported type <code>' + esc(w.type) + '</code>.</div>';
+  }
+
+  const RENDER = {
+    flow: (w, m) => renderFlowLike(w, m, true),
+    stepper: (w, m) => renderFlowLike(w, m, false),
+    'toggle-state': renderToggle,
+    slider: renderSlider,
+    compare: renderCompare,
+  };
+
+  mounts.forEach(m => {
+    const w = byId[m.dataset.widgetId]; if (!w) return;
+    try { (RENDER[w.type] || renderUnsupported)(w, m); }
+    catch (e) { m.classList.add('widget'); m.innerHTML = '<div class="ex-feedback crit" style="margin:0"><span class="fb-lbl">Widget</span>could not render.</div>'; }
+  });
 })();
 </script>
 

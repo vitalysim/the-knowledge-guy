@@ -211,6 +211,14 @@ Do NOT recap the whole book.
 Present the subagent's teaching to the user verbatim (or near-verbatim —
 you may add a short header like `### Step 3/8 — Access check pipeline`).
 
+**Course mode extends this prompt.** When this same teaching subagent is
+spawned by `course` mode (which renders an HTML lesson, not a chat step),
+the orchestrator *appends* an optional concept-visual clause — the subagent
+may additionally return one interactive **widget** spec and/or one static
+**SVG illustration**. See `SKILL.md` → Course Step C3.3 and
+`design-system/widgets.md`. Chat walks never get that clause (there is no
+page to render into), so this prompt stays prose-only here.
+
 ### 6c. Quiz (if `$QUIZZES == on`)
 
 Generate the quiz **yourself** (the orchestrator), based on the teaching

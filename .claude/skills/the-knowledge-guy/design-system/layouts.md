@@ -739,13 +739,20 @@ sandboxed iframe, and saves progress to `localStorage`.
     <div class="cell"><span class="lbl">Practice</span><span class="val">{{auto}}·{{lab}}·{{open}}</span></div>
   </div>
 
-  <!-- THEORY — existing components only -->
+  <!-- THEORY — static prose components + optional concept visuals -->
   <section class="sect" id="theory">
     <div class="sect-head"><div class="left">
       <span class="kicker">theory</span><h2>{{section title}}</h2></div></div>
     {{teaching paragraphs — practitioner voice, taught from the chapter toolkit}}
     {{.def for each framework · .worked for a worked example · .code-block for code
       · .callout.insight / .callout.caution where useful · .capsule TL;DR at the end}}
+
+    {{OPTIONAL static illustration (lint-clean, design-system classes only):
+      <div id="theory-illustration">{{<svg class="illus" …> or <div class="plate">…}}</div> }}
+
+    {{OPTIONAL interactive widget — emit the EMPTY mount here; the engine fills it:
+      <figure class="widget" data-widget-id="{{widget.id}}"></figure> }}
+
     <div class="source">…cite [skill-slug book_number]…</div>
   </section>
 
@@ -769,6 +776,11 @@ sandboxed iframe, and saves progress to `localStorage`.
        book-to-skill/reference/practice-template.md → "Field-visibility rule". -->
   <script type="application/json" id="kg-exercises">{{sanitized exercises JSON array}}</script>
 
+  {{OPTIONAL — only if the page has a widget. The widget engine hydrates the
+     <figure data-widget-id> mount above from this island. Escape `<`→`<`
+     exactly like #kg-exercises. Omit entirely when there is no widget: -->
+  <script type="application/json" id="kg-concept-widgets">{{[ widget spec ]}}</script> }}
+
 </div>
 ```
 
@@ -780,6 +792,12 @@ Notes:
   the lab engine renders every family (`auto` / `runnable` / `open`).
 - The `#kg-exercises` array is the chapter's `practice/<book_number>-<slug>.json`
   `exercises` list, with `rubric`/`model_answer` removed from `open` items.
+- **Concept widgets** (optional, theory section): the `<figure data-widget-id>`
+  mount is **empty** — the engine builds the interactive SVG from the
+  `#kg-concept-widgets` island, which never sets a color (theme-safe by
+  construction). Schema + the 5 types: `design-system/widgets.md`. State is
+  ephemeral. Bespoke static SVG goes in `#theory-illustration` and must pass
+  `lint_concept_widgets.py` (no hardcoded colors). EXTRA_CSS stays empty.
 
 ---
 

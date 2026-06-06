@@ -7,11 +7,15 @@ The chosen design system is **Knowledge Guide · Modern** — a
 technical-reader aesthetic built on Bricolage Grotesque + JetBrains
 Mono, a single cobalt accent (`#2742d3` light / `#6c89ff` dark), and
 its named components for treating books as inspectable data. The
-original 24 static components are joined by an **interactive practice
-set** added for `course` mode: `.exercise`, `.options/.opt` (with
-`.correct`/`.incorrect`/`.chosen` states), `.ex-feedback`, `.runner`
-(code editor + sandboxed output + verdict), `.btn` variants,
-`.mastery` meter, and `.ex-badge`.
+original 24 static components are joined by two `course`-mode additions:
+an **interactive practice set** (`.exercise`, `.options/.opt` with
+`.correct`/`.incorrect`/`.chosen` states, `.ex-feedback`, `.runner` =
+code editor + sandboxed output + verdict, `.btn` variants, `.mastery`
+meter, `.ex-badge`) and a **concept-widget** chrome (`.widget`,
+`.widget-head/-stage/-caption/-controls`, `.widget-toggle`) — interactive
+SVG illustrations built on the existing `.plate`/`.illus` classes. The
+widget motion is the system's only animation and is gated behind
+`prefers-reduced-motion`.
 
 ## Files in this directory
 
@@ -30,6 +34,15 @@ set** added for `course` mode: `.exercise`, `.options/.opt` (with
     quizzes, runnable code labs in a sandboxed `<iframe>`, "check with
     Claude" buttons) and persists progress to `localStorage`. It no-ops
     on any page without the island, so it ships harmlessly everywhere.
+  - The **concept-widget engine** — a sibling guarded `<script>` that
+    hydrates a `#kg-concept-widgets` island into interactive theory
+    illustrations (the 5 widget types in `widgets.md`). It builds the SVG
+    from the existing `.plate`/`.illus` classes and **only ever swaps
+    classes — never a `fill`/`stroke`** — so it is theme-safe by
+    construction; state is ephemeral. No-ops without the island.
+- **`widgets.md`** — the frozen concept-widget schema (the 5 types, the
+  class vocabulary, the viewBox, the theme-safety rule). The authoring
+  contract the teaching subagent and `lint_concept_widgets.py` both cite.
 - **`layouts.md`** — one section per use case (nutshell, synthesis,
   walk-session, walk-recap, comparison, toolkit, glossary, cheatsheet,
   concept-map, library, **course-chapter, course-index**). Each gives
