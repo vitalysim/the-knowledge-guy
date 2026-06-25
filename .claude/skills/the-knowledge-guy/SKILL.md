@@ -681,8 +681,15 @@ Used when the user wants to add a new book to their skills mid-conversation.
 
 Parse `$QUERY` and find the first token matching `\S+\.(pdf|epub)`
 (case-insensitive). Strip surrounding quotes. Expand `~/` to `$HOME/`.
-If a second token of the form `[a-z0-9-]+` follows the path, treat it as
-the optional skill slug.
+If a second token of the form `[a-z0-9-]+` (not starting with `--`) follows the
+path, treat it as the optional skill slug.
+
+**Flags (pass-through).** Also scan `$QUERY` for any of `--complete` /
+`--complete-coverage`, `--practice` / `--with-practice`, `--course`, and
+`--regenerate` (book-to-skill's Step-0.6 flags). Collect the ones present into
+`$FLAGS`, and exclude every `--…` token from slug matching (a flag must never
+become the slug). `--course` = complete coverage **+** practice — the "make it an
+interactive course" shortcut.
 
 If no path is found, print:
 
@@ -717,8 +724,11 @@ to today's date (no other state change — resume logic picks back up).
 Call:
 
 ```
-Skill(skill="book-to-skill", args="<path> [<slug>]")
+Skill(skill="book-to-skill", args="<path> [<slug>] [<flags>]")
 ```
+
+Append any `$FLAGS` parsed in Step I1 (e.g. `--course`) so the ingest runs in
+complete-coverage / practice mode without re-prompting those choices.
 
 `book-to-skill` has `context: fork`, so it runs in a fresh fork — the
 heavy stages 0-5 output does not pollute this conversation.

@@ -9,6 +9,10 @@ description: >-
   the user wants to turn a book into a skill, study a book through Claude,
   apply an author's frameworks while working, or build a reusable knowledge
   base from a PDF or EPUB — even if they don't say the word "skill".
+  Optional flags make it course-ready: --complete (verified full-coverage
+  extraction, every element audited), --practice (per-chapter quizzes +
+  in-browser runnable code labs + open tasks), or --course (both); practice is
+  what /the-knowledge-guy renders into an interactive learn-by-doing course.
 when_to_use: >-
   Trigger phrases — "turn this book into a skill", "create a skill from this
   PDF", "create a skill from this EPUB", "convert PDF to skill", "convert EPUB
@@ -23,7 +27,7 @@ allowed-tools: >-
   Bash(uv *) Bash(bash *) Bash(mkdir *) Bash(cp *) Bash(mv *)
   Bash(rm *) Bash(find *) Bash(wc *) Bash(echo *) Bash(cat *) Bash(ls *)
   Bash(test *) Bash(file *) Bash(date *) Read Write Glob Grep Task
-argument-hint: <path-to-pdf-or-epub> [skill-name-slug]
+argument-hint: <path-to-pdf-or-epub> [skill-name-slug] [--complete] [--practice] [--course]
 arguments: [book_path, skill_name]
 effort: high
 ---
@@ -118,6 +122,24 @@ test -n "$BTS_DIR" || { echo "book-to-skill: install not found"; exit 1; }
 
 Every reference below to `${BTS_DIR}` is this resolved path. Do not hard-code
 either location.
+
+## Step 0.6 — Flag shortcuts (optional)
+
+The invocation may carry any of these flags alongside the path/slug. **Strip
+them from the arguments before resolving `skill_name`** — a `--…` token must
+never become the slug — and set the matching toggle. Each flag is exactly
+equivalent to the user saying the corresponding phrase at Step 4:
+
+| Flag | Effect |
+|---|---|
+| `--complete`, `--complete-coverage` | `WITH_COVERAGE=complete` — verified full coverage (every element, audited + gap-filled) |
+| `--practice`, `--with-practice` | `WITH_PRACTICE=yes` — Stage 3 per-chapter quizzes + runnable labs + open tasks |
+| `--course` | **both** of the above — the "I want an interactive `/the-knowledge-guy course`" shortcut |
+| `--regenerate` | overwrite an existing skill's outputs (re-run stages even if files exist) |
+
+When a flag has pre-decided a choice, still show the Step-4 cost estimate (cost
+stays explicit) but **don't re-prompt that option** — only wait for the final
+"proceed?" confirmation. No flags = today's fully-interactive default, unchanged.
 
 ## Step 1 — Validate input and dependencies
 
@@ -312,9 +334,11 @@ From `metadata.json`, present an estimate **before generating anything**:
 ```
 
 Wait for confirmation. If the user says "analyze only", switch to Mode 2. If
-the user opts in with "with practice" (or the genre is technical / textbook /
+the user opts in with "with practice" (or passed `--practice`/`--course` per
+Step 0.6, or the genre is technical / textbook /
 vuln-hunting and they accept the suggestion), set `WITH_PRACTICE=yes` and run
-**Step 8.6** after the nutshell. If the user says "complete coverage" (phrases:
+**Step 8.6** after the nutshell. If the user says "complete coverage" (or passed
+`--complete`/`--course` per Step 0.6; phrases:
 "complete coverage", "cover everything", "don't skip anything"), set
 `WITH_COVERAGE=complete` — this passes `--coverage complete` to extract.py
 (Step 3), makes the auto-re-split mandatory, injects the complete-mode mandate in

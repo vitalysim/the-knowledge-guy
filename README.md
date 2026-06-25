@@ -51,7 +51,7 @@ below.
 ## Quick start
 
 ```bash
-/book-to-skill /path/to/book.pdf                                  # ingest
+/book-to-skill /path/to/book.pdf                                  # ingest  (add --course → complete coverage + practice)
 /the-knowledge-guy what do my books say about margin of safety?   # ask
 /the-knowledge-guy walk me through Kerberos                       # tutor
 /the-knowledge-guy course <skill-slug>                            # learn by doing
@@ -66,8 +66,8 @@ Every invocation also writes a self-contained HTML artifact to
 
 ### `/book-to-skill` — the ingest pipeline
 
-Map-reduce in six stages (the sixth, **Stage 3 PRACTICE**, is opt-in —
-see the hero diagram). What's worth knowing:
+Map-reduce in six stages (the sixth, **Stage 3 PRACTICE**, is opt-in),
+plus an opt-in per-chapter **coverage audit**. What's worth knowing:
 
 - **Two-tier output.** `SKILL.md` is always loaded;
   `chapters/<book_number>-<slug>.md` is paged in on demand. The
@@ -86,12 +86,22 @@ see the hero diagram). What's worth knowing:
 - **Seven genre profiles** (technical / vuln-hunting / financial /
   scientific / productivity / narrative non-fiction / general) tune
   chunk boundaries, the chapter schema, and the reduce emphasis.
+- **Complete-coverage mode (opt-in)** replaces the default dense, capped
+  toolkits with capturing *every* load-bearing element in every chapter,
+  then runs a per-chapter **coverage audit** and re-runs any chapter with
+  gaps until it clears a 95% gate — so nothing is silently dropped. (CS:APP
+  was ingested this way: 130 sections, every one audited to 100%.)
 - **Stage 3 PRACTICE (opt-in)** turns each chapter into a practice set —
   it extracts the book's own exercises, generates new ones, and for
   cyber/technical chapters can web-research realistic labs. The output
   (`practice/<book_number>-<slug>.json`) is what `/the-knowledge-guy
   course` renders as an interactive learn-by-doing site. Best for
   technical / textbook / vuln-hunting books.
+- **Options — flags or interactive.** Pass `--complete` (full coverage),
+  `--practice` (Stage 3), `--course` (both → course-ready), or
+  `--regenerate` (rebuild an existing skill) — or omit them and
+  book-to-skill prompts for each *with a cost estimate before spending*.
+  The same flags pass through the router: `/the-knowledge-guy <path>.pdf --course`.
 
 ### `/the-knowledge-guy` — the router + teacher
 
